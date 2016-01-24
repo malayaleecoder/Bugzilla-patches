@@ -1,0 +1,482 @@
+Bug #1241846 - Remove unused sync xml resources
+diff --git a/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml b/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml
++++ /dev/null
+@@ -1,34 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_redirect_to_set_up_sync" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <TextView
+-      style="@style/SyncTextItem"
+-      android:text="@string/sync_text_redirect_to_set_up_sync" />
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="redirectToSetupHandler"
+-      android:text="@string/sync_button_set_up_sync" />
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_send_tab.xml b/mobile/android/services/src/main/res/layout/sync_send_tab.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_send_tab.xml
++++ /dev/null
+@@ -1,51 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_send_tab" />
+-
+-  <LinearLayout
+-    android:layout_width="fill_parent"
+-    android:layout_height="wrap_content"
+-    android:orientation="vertical"
+-    android:padding="@dimen/SyncSpace" >
+-
+-    <TextView
+-      android:id="@+id/title"
+-      android:layout_width="fill_parent"
+-      android:layout_height="wrap_content"
+-      android:textAppearance="?android:attr/textAppearanceMedium"
+-      android:text="@string/sync_title_send_tab" />
+-    <TextView
+-      android:id="@+id/uri"
+-      android:layout_width="fill_parent"
+-      android:layout_height="wrap_content"
+-      android:textAppearance="?android:attr/textAppearanceSmall"
+-      android:text="@string/sync_title_send_tab" />
+-  </LinearLayout>
+-
+-  <ListView
+-    android:id="@+id/device_list"
+-    style="@style/SyncMiddle"
+-    android:padding="0dp" >
+-  </ListView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:id="@+id/send_button"
+-      android:onClick="sendClickHandler"
+-      android:clickable="false"
+-      android:enabled="false"
+-      android:text="@string/sync_button_send" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup.xml b/mobile/android/services/src/main/res/layout/sync_setup.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup.xml
++++ /dev/null
+@@ -1,94 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_connect" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle"
+-    android:padding="@dimen/SyncSpace" >
+-
+-    <LinearLayout
+-        style="@style/SyncLayout.Vertical" >
+-
+-      <TextView
+-        android:id="@+id/setup_header"
+-        style="@style/SyncTextItem"
+-        android:gravity="left"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:text="@string/sync_subtitle_header"
+-        android:textStyle="bold"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/setup_subtitle" />
+-
+-      <TextView
+-        android:id="@id/setup_subtitle"
+-        style="@style/SyncTextItem"
+-        android:gravity="left"
+-        android:text="@string/sync_subtitle_connect"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/setup_showme"
+-        android:nextFocusUp="@id/setup_header" />
+-
+-      <TextView
+-        android:id="@id/setup_showme"
+-        style="@style/SyncLinkItem"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:onClick="showClickHandler"
+-        android:text="@string/sync_link_show"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/text_pin1"
+-        android:nextFocusUp="@id/setup_subtitle" />
+-
+-      <LinearLayout
+-        style="@style/SyncLayout"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:orientation="vertical" >
+-        <TextView
+-          android:id="@id/text_pin1"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/text_pin2"
+-          android:nextFocusUp="@id/setup_showme" />
+-        <TextView
+-          android:id="@id/text_pin2"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/text_pin3"
+-          android:nextFocusUp="@id/text_pin1" />
+-        <TextView
+-          android:id="@id/text_pin3"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/link_nodevice"
+-          android:nextFocusUp="@id/text_pin2" />
+-      </LinearLayout>
+-      <TextView
+-        android:id="@id/link_nodevice"
+-        style="@style/SyncLinkItem"
+-        android:gravity="center"
+-        android:onClick="manualClickHandler"
+-        android:text="@string/sync_link_advancedsetup"
+-        android:focusable="true"
+-        android:nextFocusUp="@id/text_pin3" />
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom"
+-    android:orientation="horizontal" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_failure.xml b/mobile/android/services/src/main/res/layout/sync_setup_failure.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_failure.xml
++++ /dev/null
+@@ -1,48 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_fail" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-      <LinearLayout
+-        style="@style/SyncLayout.Vertical" >
+-        <TextView android:id="@+id/failure_subtitle1"
+-          style="@style/SyncTextItem"
+-          android:paddingBottom="@dimen/SyncSpace"
+-          android:text="@string/sync_subtitle_fail" />
+-
+-        <TextView android:id="@+id/failure_subtitle2"
+-          style="@style/SyncTextItem"
+-          android:text="@string/sync_subtitle_failmultiple" />
+-      </LinearLayout>
+-    </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="tryAgainClickHandler"
+-      android:text="@string/sync_button_tryagain" />
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="manualClickHandler"
+-      android:text="@string/sync_button_manual" />
+-
+-     <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml b/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml
++++ /dev/null
+@@ -1,43 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_connect" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <LinearLayout
+-      style="@style/SyncLayout.Vertical" >
+-
+-      <ProgressBar
+-        android:id="@+id/waiting_content1"
+-        style="@style/Widget.ProgressBar.Horizontal"
+-        android:layout_width="fill_parent"
+-        android:layout_height="wrap_content"
+-        android:indeterminateOnly="true"
+-        android:padding="@dimen/SyncSpace" />
+-
+-      <TextView
+-        style="@style/SyncTextItem"
+-        android:gravity="center"
+-        android:text="@string/sync_jpake_subtitle_waiting" />
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom">
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml b/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml
++++ /dev/null
+@@ -1,31 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_fail" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <TextView
+-      style="@style/SyncTextItem"
+-      android:gravity="center"
+-      android:text="@string/sync_subtitle_nointernet" />
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_ok" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_pair.xml b/mobile/android/services/src/main/res/layout/sync_setup_pair.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_pair.xml
++++ /dev/null
+@@ -1,85 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_pair" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <LinearLayout
+-      style="@style/SyncLayout.Vertical"
+-      android:gravity="center" >
+-      <TextView
+-        android:id="@+id/setup_subtitle"
+-        style="@style/SyncTextItem"
+-        android:text="@string/sync_subtitle_pair" />
+-
+-      <TextView
+-        style="@style/SyncLinkItem"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:onClick="showClickHandler"
+-        android:text="@string/sync_link_show" />
+-
+-      <LinearLayout
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:gravity="center"
+-        android:orientation="vertical" >
+-
+-        <EditText
+-          android:id="@+id/pair_row1"
+-          style="@style/SyncEditPin"
+-          android:state_focused="true" />
+-        <EditText
+-          android:id="@+id/pair_row2"
+-          style="@style/SyncEditPin" />
+-        <EditText
+-          android:id="@+id/pair_row3"
+-          style="@style/SyncEditPin"
+-          android:imeOptions="actionDone|flagNoExtractUi" />
+-      </LinearLayout>
+-
+-      <LinearLayout
+-        android:id="@+id/pair_error"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:gravity="center"
+-        android:orientation="horizontal"
+-        android:visibility="invisible" >
+-
+-        <TextView
+-          style="@style/SyncTextError"
+-          android:text="@string/sync_pair_tryagain"
+-          android:textSize="10dp" />
+-      </LinearLayout>
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom"
+-    android:orientation="horizontal" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-
+-    <Button
+-      android:id="@+id/pair_button_connect"
+-      style="@style/SyncButton"
+-      android:onClick="connectClickHandler"
+-      android:clickable="false"
+-      android:enabled="false"
+-      android:text="@string/sync_button_connect" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_success.xml b/mobile/android/services/src/main/res/layout/sync_setup_success.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_success.xml
++++ /dev/null
+@@ -1,39 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-	<TextView
+-		style="@style/SyncTop"
+-		android:text="@string/sync_title_success" />
+-
+-	<ScrollView
+-		style="@style/SyncMiddle" >
+-
+-		<TextView
+-			android:id="@+id/setup_success_subtitle"
+-			style="@style/SyncTextItem"
+-			android:layout_width="wrap_content"
+-			android:layout_height="wrap_content"
+-			android:gravity="left"
+-			android:text="@string/sync_subtitle_success" />
+-	</ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="settingsClickHandler"
+-      android:text="@string/sync_settings" />
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="launchBrowser"
+-      android:text="@string/brand_short_name" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_webview.xml b/mobile/android/services/src/main/res/layout/sync_setup_webview.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_webview.xml
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncLayout" >
+-  <WebView android:id="@+id/web_engine"
+-    android:layout_width="fill_parent"
+-    android:layout_height="fill_parent" />
+-</LinearLayout>
