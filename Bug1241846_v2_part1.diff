@@ -1,0 +1,794 @@
+#HG changeset patch
+#User malayaleecoder <malayaleecoder@gmail.com>
+Bug 1241846 - Remove unused sync xml resources.
+
+diff --git a/mobile/android/services/src/main/res/layout/sync_account.xml b/mobile/android/services/src/main/res/layout/sync_account.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_account.xml
++++ /dev/null
+@@ -1,80 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-	xmlns:tools="http://schemas.android.com/tools"
+-	style="@style/SyncContainer">
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_connect" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-	<LinearLayout
+-      style="@style/SyncLayout.Vertical" >
+-
+-	  <TextView
+-	    style="@style/SyncTextItem"
+-	    android:text="@string/sync_subtitle_account"
+-	    android:paddingBottom="@dimen/SyncSpace" />
+-
+-	  <EditText android:id="@+id/usernameInput"
+-	    style="@style/SyncEditItem"
+-      android:state_focused="true"
+-	    android:hint="@string/sync_input_username" />
+-
+-	  <EditText android:id="@+id/passwordInput"
+-	    style="@style/SyncEditItem"
+-	    android:inputType="textPassword"
+-	    android:hint="@string/sync_input_password" />
+-
+-	  <EditText android:id="@+id/keyInput"
+-	    style="@style/SyncEditItem"
+-	    android:hint="@string/sync_input_key" />
+-
+-	  <TextView android:id="@+id/cred_error"
+-	    style="@style/SyncTextError"
+-	    android:text="@string/sync_invalidcreds_label" />
+-
+-	  <CheckBox android:id="@+id/checkbox_server"
+-	    android:layout_width="wrap_content"
+-	    android:layout_height="wrap_content"
+-	    android:layout_gravity="left"
+-	    android:text="@string/sync_checkbox_server" />
+-
+-	  <EditText android:id="@+id/serverInput"
+-	    style="@style/SyncEditItem"
+-	    android:visibility="gone"
+-	    android:hint="@string/sync_input_server" />
+-
+-	  <TextView android:id="@+id/server_error"
+-	    style="@style/SyncTextError"
+-	    android:text="@string/sync_invalidserver_label" />
+-
+-	</LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom">
+-    <Button
+-      android:id="@+id/accountCancelButton"
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel"
+-		tools:text="Cancel"/>
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:id="@+id/accountConnectButton"
+-      android:onClick="connectClickHandler"
+-      android:clickable="false"
+-      android:enabled="false"
+-      android:text="@string/sync_button_connect"
+-		tools:text="Connect"/>
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_list_item.xml b/mobile/android/services/src/main/res/layout/sync_list_item.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_list_item.xml
++++ /dev/null
+@@ -1,34 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:gravity="center_vertical"
+-    android:layout_width="fill_parent"
+-    android:layout_height="wrap_content"
+-    android:minHeight="?android:attr/listPreferredItemHeight"
+-    android:orientation="horizontal"
+-    android:padding="5dp" >
+-
+-    <ImageView
+-        android:id="@+id/img"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:padding="10dp"
+-        android:layout_marginRight="10dip" />
+-
+-    <TextView
+-        android:id="@+id/client_name"
+-        android:layout_gravity="center"
+-        android:layout_width="0dp"
+-        android:layout_weight="0.5"
+-        android:layout_height="wrap_content" />
+-
+-    <CheckBox
+-        android:id="@+id/check"
+-        android:layout_width="40dp"
+-        android:layout_height="40dp"
+-        android:layout_marginLeft="10dip" />
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml b/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_redirect_to_setup.xml
++++ /dev/null
+@@ -1,34 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_redirect_to_set_up_sync" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <TextView
+-      style="@style/SyncTextItem"
+-      android:text="@string/sync_text_redirect_to_set_up_sync" />
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="redirectToSetupHandler"
+-      android:text="@string/sync_button_set_up_sync" />
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_send_tab.xml b/mobile/android/services/src/main/res/layout/sync_send_tab.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_send_tab.xml
++++ /dev/null
+@@ -1,51 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_send_tab" />
+-
+-  <LinearLayout
+-    android:layout_width="fill_parent"
+-    android:layout_height="wrap_content"
+-    android:orientation="vertical"
+-    android:padding="@dimen/SyncSpace" >
+-
+-    <TextView
+-      android:id="@+id/title"
+-      android:layout_width="fill_parent"
+-      android:layout_height="wrap_content"
+-      android:textAppearance="?android:attr/textAppearanceMedium"
+-      android:text="@string/sync_title_send_tab" />
+-    <TextView
+-      android:id="@+id/uri"
+-      android:layout_width="fill_parent"
+-      android:layout_height="wrap_content"
+-      android:textAppearance="?android:attr/textAppearanceSmall"
+-      android:text="@string/sync_title_send_tab" />
+-  </LinearLayout>
+-
+-  <ListView
+-    android:id="@+id/device_list"
+-    style="@style/SyncMiddle"
+-    android:padding="0dp" >
+-  </ListView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:id="@+id/send_button"
+-      android:onClick="sendClickHandler"
+-      android:clickable="false"
+-      android:enabled="false"
+-      android:text="@string/sync_button_send" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup.xml b/mobile/android/services/src/main/res/layout/sync_setup.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup.xml
++++ /dev/null
+@@ -1,94 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-      style="@style/SyncTop"
+-      android:text="@string/sync_title_connect" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle"
+-    android:padding="@dimen/SyncSpace" >
+-
+-    <LinearLayout
+-        style="@style/SyncLayout.Vertical" >
+-
+-      <TextView
+-        android:id="@+id/setup_header"
+-        style="@style/SyncTextItem"
+-        android:gravity="left"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:text="@string/sync_subtitle_header"
+-        android:textStyle="bold"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/setup_subtitle" />
+-
+-      <TextView
+-        android:id="@id/setup_subtitle"
+-        style="@style/SyncTextItem"
+-        android:gravity="left"
+-        android:text="@string/sync_subtitle_connect"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/setup_showme"
+-        android:nextFocusUp="@id/setup_header" />
+-
+-      <TextView
+-        android:id="@id/setup_showme"
+-        style="@style/SyncLinkItem"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:onClick="showClickHandler"
+-        android:text="@string/sync_link_show"
+-        android:focusable="true"
+-        android:nextFocusDown="@+id/text_pin1"
+-        android:nextFocusUp="@id/setup_subtitle" />
+-
+-      <LinearLayout
+-        style="@style/SyncLayout"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:orientation="vertical" >
+-        <TextView
+-          android:id="@id/text_pin1"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/text_pin2"
+-          android:nextFocusUp="@id/setup_showme" />
+-        <TextView
+-          android:id="@id/text_pin2"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/text_pin3"
+-          android:nextFocusUp="@id/text_pin1" />
+-        <TextView
+-          android:id="@id/text_pin3"
+-          style="@style/SyncPinText"
+-          android:focusable="true"
+-          android:nextFocusDown="@+id/link_nodevice"
+-          android:nextFocusUp="@id/text_pin2" />
+-      </LinearLayout>
+-      <TextView
+-        android:id="@id/link_nodevice"
+-        style="@style/SyncLinkItem"
+-        android:gravity="center"
+-        android:onClick="manualClickHandler"
+-        android:text="@string/sync_link_advancedsetup"
+-        android:focusable="true"
+-        android:nextFocusUp="@id/text_pin3" />
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom"
+-    android:orientation="horizontal" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_failure.xml b/mobile/android/services/src/main/res/layout/sync_setup_failure.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_failure.xml
++++ /dev/null
+@@ -1,48 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_fail" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-      <LinearLayout
+-        style="@style/SyncLayout.Vertical" >
+-        <TextView android:id="@+id/failure_subtitle1"
+-          style="@style/SyncTextItem"
+-          android:paddingBottom="@dimen/SyncSpace"
+-          android:text="@string/sync_subtitle_fail" />
+-
+-        <TextView android:id="@+id/failure_subtitle2"
+-          style="@style/SyncTextItem"
+-          android:text="@string/sync_subtitle_failmultiple" />
+-      </LinearLayout>
+-    </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="tryAgainClickHandler"
+-      android:text="@string/sync_button_tryagain" />
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="manualClickHandler"
+-      android:text="@string/sync_button_manual" />
+-
+-     <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml b/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_jpake_waiting.xml
++++ /dev/null
+@@ -1,43 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_connect" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <LinearLayout
+-      style="@style/SyncLayout.Vertical" >
+-
+-      <ProgressBar
+-        android:id="@+id/waiting_content1"
+-        style="@style/Widget.ProgressBar.Horizontal"
+-        android:layout_width="fill_parent"
+-        android:layout_height="wrap_content"
+-        android:indeterminateOnly="true"
+-        android:padding="@dimen/SyncSpace" />
+-
+-      <TextView
+-        style="@style/SyncTextItem"
+-        android:gravity="center"
+-        android:text="@string/sync_jpake_subtitle_waiting" />
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom">
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml b/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_nointernet.xml
++++ /dev/null
+@@ -1,31 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_fail" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <TextView
+-      style="@style/SyncTextItem"
+-      android:gravity="center"
+-      android:text="@string/sync_subtitle_nointernet" />
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_ok" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_pair.xml b/mobile/android/services/src/main/res/layout/sync_setup_pair.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_pair.xml
++++ /dev/null
+@@ -1,85 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-  <TextView
+-    style="@style/SyncTop"
+-    android:text="@string/sync_title_pair" />
+-
+-  <ScrollView
+-    style="@style/SyncMiddle" >
+-
+-    <LinearLayout
+-      style="@style/SyncLayout.Vertical"
+-      android:gravity="center" >
+-      <TextView
+-        android:id="@+id/setup_subtitle"
+-        style="@style/SyncTextItem"
+-        android:text="@string/sync_subtitle_pair" />
+-
+-      <TextView
+-        style="@style/SyncLinkItem"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:onClick="showClickHandler"
+-        android:text="@string/sync_link_show" />
+-
+-      <LinearLayout
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:gravity="center"
+-        android:orientation="vertical" >
+-
+-        <EditText
+-          android:id="@+id/pair_row1"
+-          style="@style/SyncEditPin"
+-          android:state_focused="true" />
+-        <EditText
+-          android:id="@+id/pair_row2"
+-          style="@style/SyncEditPin" />
+-        <EditText
+-          android:id="@+id/pair_row3"
+-          style="@style/SyncEditPin"
+-          android:imeOptions="actionDone|flagNoExtractUi" />
+-      </LinearLayout>
+-
+-      <LinearLayout
+-        android:id="@+id/pair_error"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:paddingBottom="@dimen/SyncSpace"
+-        android:gravity="center"
+-        android:orientation="horizontal"
+-        android:visibility="invisible" >
+-
+-        <TextView
+-          style="@style/SyncTextError"
+-          android:text="@string/sync_pair_tryagain"
+-          android:textSize="10dp" />
+-      </LinearLayout>
+-    </LinearLayout>
+-  </ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom"
+-    android:orientation="horizontal" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="cancelClickHandler"
+-      android:text="@string/sync_button_cancel" />
+-
+-    <Button
+-      android:id="@+id/pair_button_connect"
+-      style="@style/SyncButton"
+-      android:onClick="connectClickHandler"
+-      android:clickable="false"
+-      android:enabled="false"
+-      android:text="@string/sync_button_connect" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_success.xml b/mobile/android/services/src/main/res/layout/sync_setup_success.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_success.xml
++++ /dev/null
+@@ -1,39 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncContainer" >
+-
+-	<TextView
+-		style="@style/SyncTop"
+-		android:text="@string/sync_title_success" />
+-
+-	<ScrollView
+-		style="@style/SyncMiddle" >
+-
+-		<TextView
+-			android:id="@+id/setup_success_subtitle"
+-			style="@style/SyncTextItem"
+-			android:layout_width="wrap_content"
+-			android:layout_height="wrap_content"
+-			android:gravity="left"
+-			android:text="@string/sync_subtitle_success" />
+-	</ScrollView>
+-
+-  <LinearLayout
+-    style="@style/SyncBottom" >
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="settingsClickHandler"
+-      android:text="@string/sync_settings" />
+-
+-    <Button
+-      style="@style/SyncButton"
+-      android:onClick="launchBrowser"
+-      android:text="@string/brand_short_name" />
+-  </LinearLayout>
+-
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/layout/sync_setup_webview.xml b/mobile/android/services/src/main/res/layout/sync_setup_webview.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/layout/sync_setup_webview.xml
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-  style="@style/SyncLayout" >
+-  <WebView android:id="@+id/web_engine"
+-    android:layout_width="fill_parent"
+-    android:layout_height="fill_parent" />
+-</LinearLayout>
+diff --git a/mobile/android/services/src/main/res/values-large-v11/sync_styles.xml b/mobile/android/services/src/main/res/values-large-v11/sync_styles.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/values-large-v11/sync_styles.xml
++++ /dev/null
+@@ -1,17 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+-  <!-- Theme Styles -->
+-  <style name="SyncTheme" parent="@style/Gecko.Dialog" />
+-
+-  <!-- Outer container: a container with top, middle, and bottom
+-       content in it. -->
+-  <style name="SyncContainer" parent="@style/SyncLayout.Vertical">
+-    <item name="android:layout_width">600dp</item>
+-    <item name="android:minWidth">600dp</item>
+-    <item name="android:minHeight">600dp</item>
+-  </style>
+-</resources>
+diff --git a/mobile/android/services/src/main/res/values-v11/sync_styles.xml b/mobile/android/services/src/main/res/values-v11/sync_styles.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/values-v11/sync_styles.xml
++++ /dev/null
+@@ -1,31 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+-  <!-- Top title bar: a text view with the Sync icon to the left. -->
+-  <style name="SyncTop" parent="@android:style/Widget.Holo.ActionBar">
+-    <item name="android:textAppearance">@android:style/TextAppearance.Holo.Widget.ActionBar.Title</item>
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:gravity">center_vertical|left</item>
+-    <item name="android:drawableLeft">@drawable/icon</item>
+-    <item name="android:padding">4dp</item>
+-    <item name="android:drawablePadding">4dp</item>
+-  </style>
+-
+-  <!-- Bottom bar: a horizontal linear layout with buttons in it. -->
+-  <style name="SyncBottomBase" parent="@android:style/Holo.Light.ButtonBar">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-  </style>
+-
+-  <style name="SyncButton" parent="@android:style/Widget.Holo.Light.Button.Small">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:layout_weight">1</item>
+-    <item name="android:background">?android:attr/selectableItemBackground</item>
+-  </style>
+-
+-</resources>
+diff --git a/mobile/android/services/src/main/res/values/sync_styles.xml b/mobile/android/services/src/main/res/values/sync_styles.xml
+deleted file mode 100644
+--- a/mobile/android/services/src/main/res/values/sync_styles.xml
++++ /dev/null
+@@ -1,122 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+-   - License, v. 2.0. If a copy of the MPL was not distributed with this
+-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+-
+-<resources>
+-  <style name="SyncLayout">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">fill_parent</item>
+-  </style>
+-  <style name="SyncLayout.Vertical" parent="@style/SyncLayout">
+-    <item name="android:orientation">vertical</item>
+-  </style>
+-  <style name="SyncLayout.Horizontal" parent="@style/SyncLayout">
+-    <item name="android:orientation">horizontal</item>
+-  </style>
+-
+-  <!-- TextView Styles -->
+-  <style name="SyncTextFrame" parent="@style/TextAppearance">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">fill_parent</item>
+-    <item name="android:layout_gravity">center</item>
+-    <item name="android:padding">@dimen/SyncSpace</item>
+-    <item name="android:orientation">vertical</item>
+-  </style>
+-  <style name="SyncTextItem" parent="@style/TextAppearance.Medium">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:textSize">15dp</item>
+-  </style>
+-  <style name="SyncTextError" parent="@style/SyncTextItem">
+-    <item name="android:textSize">15dp</item>
+-    <item name="android:visibility">gone</item>
+-  </style>
+-  <style name="SyncLinkItem" parent="@style/SyncTextItem">
+-    <item name="android:clickable">true</item>
+-    <item name="android:textColor">#0000EE</item>
+-  </style>
+-  <style name="SyncTextTitle" parent="@style/SyncTextItem">
+-    <item name="android:layout_gravity">center_vertical</item>
+-    <item name="android:paddingLeft">4dp</item>
+-    <item name="android:gravity">left</item>
+-    <item name="android:textSize">20dp</item>
+-  </style>
+-  <!-- EditView Styles -->
+-  <style name="SyncEditItem" parent="@style/Widget.EditText">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:singleLine">true</item>
+-    <item name="android:inputType">text|textNoSuggestions</item>
+-  </style>
+-  <style name="SyncEditPin" parent="@style/SyncEditItem">
+-    <item name="android:layout_width">wrap_content</item>
+-    <item name="android:gravity">center_horizontal</item>
+-    <item name="android:ems">4</item>
+-    <item name="android:maxLength">4</item>
+-    <item name="android:imeOptions">actionNext|flagNoExtractUi</item>
+-  </style>
+-
+-  <!-- Theme Styles -->
+-  <style name="SyncTheme" parent="@style/Gecko" />
+-
+-  <!-- Outer container: a container with top, middle, and bottom
+-       content in it. -->
+-  <style name="SyncContainer" parent="@style/SyncLayout.Vertical" />
+-
+-  <!-- Top title bar: a text view with the Sync icon to the left. -->
+-  <style name="SyncTop">
+-    <item name="android:textAppearance">@style/TextAppearance.Large</item>
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:gravity">center_vertical|left</item>
+-    <item name="android:drawableLeft">@drawable/icon</item>
+-    <item name="android:padding">4dp</item>
+-    <item name="android:drawablePadding">4dp</item>
+-    <item name="android:background">@android:drawable/bottom_bar</item>
+-  </style>
+-
+-  <dimen name="SyncSpace">20dp</dimen>
+-
+-  <!-- Middle scroller: a scroll view with content in it. -->
+-  <style name="SyncMiddle">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">0dp</item>
+-    <item name="android:layout_weight">1</item>
+-    <item name="android:padding">@dimen/SyncSpace</item>
+-  </style>
+-
+-  <!-- Bottom bar: a horizontal linear layout with buttons in it. -->
+-  <style name="SyncBottomBase">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:layout_gravity">center</item>
+-    <item name="android:gravity">center</item>
+-    <item name="android:background">@android:drawable/bottom_bar</item>
+-  </style>
+-
+-  <style name="SyncBottom" parent="SyncBottomBase">
+-    <item name="android:divider">@android:drawable/divider_horizontal_bright</item>
+-    <item name="android:showDividers">beginning</item>
+-    <item name="android:orientation">vertical</item>
+-  </style>
+-
+-  <style name="SyncButton" parent="@style/Widget.Button">
+-    <item name="android:layout_width">fill_parent</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:layout_weight">1</item>
+-  </style>
+-
+-  <!-- Text Display Styles -->
+-  <style name="SyncPinText" parent="@style/Widget.TextView">
+-    <item name="android:layout_width">130sp</item>
+-    <item name="android:layout_height">wrap_content</item>
+-    <item name="android:layout_gravity">center</item>
+-    <item name="android:layout_marginBottom">5dp</item>
+-    <item name="android:gravity">center</item>
+-    <item name="android:background">@drawable/sync_pin_background</item>
+-    <item name="android:textColor">#000</item>
+-    <item name="android:textSize">35sp</item>
+-    <item name="android:text">@string/sync_pin_default</item>
+-  </style>
+-</resources>
