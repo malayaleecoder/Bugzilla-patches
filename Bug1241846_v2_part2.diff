@@ -1,0 +1,254 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1453922586 -19800
+#      Thu Jan 28 00:53:06 2016 +0530
+# Branch Bug1234875
+# Node ID 88fa3d077b4f63af563feffd6381a504f8cb5273
+# Parent  7000c76a50ceadde11b1963ec1290ac427a1bfaf
+Bug 1241846 - Remove unused sync xml resources
+
+diff --git a/mobile/android/base/locales/en-US/sync_strings.dtd b/mobile/android/base/locales/en-US/sync_strings.dtd
+--- a/mobile/android/base/locales/en-US/sync_strings.dtd
++++ b/mobile/android/base/locales/en-US/sync_strings.dtd
+@@ -3,119 +3,65 @@
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+ <!-- Don't localize these. They're here until they have
+      a better place to live. -->
+ <!ENTITY syncBrand.fullName.label "Firefox Sync">
+ <!ENTITY syncBrand.shortName.label "Sync">
+ 
+ <!-- Main titles. -->
+-<!ENTITY sync.app.name.label '&syncBrand.fullName.label;'>
+ <!ENTITY sync.title.connect.label 'Connect to &syncBrand.shortName.label;'>
+-<!ENTITY sync.title.adddevice.label 'Add a &syncBrand.fullName.label; Account'>
+-<!ENTITY sync.title.pair.label 'Pair a Device'>
+ 
+ <!-- J-PAKE Key Screen -->
+ <!ENTITY sync.subtitle.connect.label 'To activate your new device, select “Set up &syncBrand.shortName.label;” on the device.'>
+-<!ENTITY sync.subtitle.header2.label 'Enter this code on your other device'>
+-<!ENTITY sync.subtitle.connectlocation2.label 'Select “&sync.title.pair.label;” in the &syncBrand.shortName.label; section of your other device\&apos;s Firefox options.'>
+ <!ENTITY sync.subtitle.pair.label 'To activate, select “Pair a device” on your other device.'>
+ <!ENTITY sync.pin.default.label '...\n...\n...\n'>
+-<!ENTITY sync.pin.oneline.label '...'>
+-<!ENTITY sync.link.show.label 'Show me how.'>
+-<!ENTITY sync.link.advancedsetup.label 'Advanced setup…'>
+ <!ENTITY sync.link.nodevice.label 'I don\&apos;t have the device with me…'>
+ 
+ <!-- J-PAKE Waiting Screen -->
+-<!ENTITY sync.jpake.subtitle.waiting.label 'Waiting for other device…'>
+ 
+ <!-- Account Login Screen -->
+-<!ENTITY sync.subtitle.account.label 'Enter your &syncBrand.fullName.label; account information'>
+-<!ENTITY sync.input.username.label 'Account Name'>
+-<!ENTITY sync.input.password.label 'Password'>
+-<!ENTITY sync.input.key.label 'Recovery Key'>
+-<!ENTITY sync.checkbox.server.label 'Use custom server'>
+-<!ENTITY sync.input.server.label 'Server URL'>
+ 
+ <!-- Setup Fail -->
+-<!ENTITY sync.title.fail.label 'Cannot Set Up &syncBrand.shortName.label;'>
+-<!ENTITY sync.subtitle.fail.label '&syncBrand.fullName.label; could not connect to the server. Would you like to try again?'>
+-<!ENTITY sync.button.tryagain.label 'Try again'>
+-<!ENTITY sync.button.manual.label 'Manual Setup'>
+-<!ENTITY sync.subtitle.nointernet.label 'No internet connection available.'>
+-<!ENTITY sync.subtitle.failaccount.label 'Account creation on your device failed.'>
+-<!ENTITY sync.subtitle.failmultiple.label 'Do you have more than one Firefox installed? Currently, &syncBrand.fullName.label; only supports one Firefox installation at a time. Please uninstall other instances to use &syncBrand.shortName.label;.'>
+ 
+ <!-- Setup Success -->
+-<!ENTITY sync.title.success.label 'Setup Complete'>
+-<!ENTITY sync.subtitle.success.label1 'Your data is now being downloaded in the background. You can go to Settings to manage your account, or start browsing with &brandShortName;.'>
+-<!ENTITY sync.settings.label 'Settings'>
+-<!ENTITY sync.subtitle.manage.label1 'Your &syncBrand.fullName.label; account is already set up. You can go to Settings to manage your account, or launch &brandShortName;.'>
+ 
+ <!-- Pair Device -->
+-<!ENTITY sync.pair.tryagain.label 'Please try again.'>
+-<!ENTITY sync.pair.connectlocation.label 'To activate your new device, select “Set up &syncBrand.shortName.label;” on the device, and then select “I Have an Account.”'>
+ 
+ <!-- Firefox SyncAdapter Settings Screen -->
+-<!ENTITY sync.settings.options.label 'Options'>
+-<!ENTITY sync.summary.pair.label 'Link another device to your &syncBrand.shortName.label; account'>
+ 
+ <!-- Configure Engines -->
+-<!ENTITY sync.configure.engines.title.label 'What to sync'>
+-<!ENTITY sync.configure.engines.sync.my.title.label 'Sync your…'>
+-<!ENTITY sync.configure.engines.title.bookmarks 'Bookmarks'>
+-<!ENTITY sync.configure.engines.title.passwords2 'Logins'>
+-<!ENTITY sync.configure.engines.title.history 'History'>
+-<!ENTITY sync.configure.engines.title.tabs 'Tabs'>
+ 
+ <!-- Common text -->
+-<!ENTITY sync.button.cancel.label 'Cancel'>
+-<!ENTITY sync.button.connect.label 'Connect'>
+-<!ENTITY sync.button.ok.label 'OK'>
+ 
+ <!-- Account strings -->
+-<!ENTITY sync.account.label '&syncBrand.fullName.label; (deprecated)'>
+ 
+ <!-- Localization note (sync.default.client.name): Default string of the "Device
+      name" menu item upon setting up Firefox Sync.  The placeholder &formatS1
+      will be replaced by the name of the Firefox release channel and &formatS2
+      by the model name of the Android device. Examples look like "Aurora on
+      GT-I1950" and "Fennec on MI 2S". -->
+-<!ENTITY sync.default.client.name '&formatS1; on &formatS2;'>
+ 
+ <!-- Bookmark folder strings -->
+ <!ENTITY bookmarks.folder.menu.label 'Bookmarks Menu'>
+ <!ENTITY bookmarks.folder.places.label ''>
+ <!ENTITY bookmarks.folder.tags.label 'Tags'>
+ <!ENTITY bookmarks.folder.toolbar.label 'Bookmarks Toolbar'>
+ <!ENTITY bookmarks.folder.unfiled.label 'Unsorted Bookmarks'>
+ <!ENTITY bookmarks.folder.desktop.label 'Desktop Bookmarks'>
+ <!ENTITY bookmarks.folder.mobile.label 'Mobile Bookmarks'>
+ <!ENTITY bookmarks.folder.readinglist.label 'Reading List'>
+ <!-- Pinned sites on about:home. This folder should never be shown to the user, but we have to give it a string name -->
+ <!ENTITY bookmarks.folder.pinned.label 'Pinned'>
+ 
+ <!-- Notification strings -->
+-<!ENTITY sync.notification.oneaccount.label 'Only one &syncBrand.fullName.label; account is supported.'>
+-<!ENTITY sync.notification.configure.saved 'Your selections have been saved.'>
+ 
+ <!-- Incorrect settings and changing credentials. -->
+-<!ENTITY sync.invalidcreds.label 'Incorrect account name or password.'>
+-<!ENTITY sync.invalidserver.label 'Please enter a valid server URL'>
+-<!ENTITY sync.verifying.label 'Verifying…'>
+-<!ENTITY sync.new.recoverykey.status.incorrect 'Recovery Key incorrect. Please try again.'>
+ 
+ <!-- Send tab to device. -->
+-<!ENTITY sync.title.send.tab.label 'Send Tab To Devices'>
+-<!ENTITY sync.button.send.label 'Send'>
+-<!ENTITY sync.button.set.up.sync.label 'Set up &syncBrand.shortName.label;'>
+-<!ENTITY sync.title.redirect.to.set.up.sync.label 'Set up &syncBrand.shortName.label; to send tabs'>
+-<!ENTITY sync.text.redirect.to.set.up.sync.label 'Set up &syncBrand.fullName.label; on your device to send tabs to other devices.'>
+-<!ENTITY sync.text.tab.sent.label 'Your tab was sent!'>
+-<!ENTITY sync.text.tab.not.sent.label 'There was a problem sending your tab.'>
+ 
+ <!-- Firefox Account strings. -->
+ 
+ <!ENTITY fxaccount_full_label 'Firefox Accounts'>
+ 
+ <!ENTITY fxaccount_custom_server_account_title 'Using account on server'>
+ <!ENTITY fxaccount_custom_server_sync_title 'Storing Sync data on server'>
+ 
+diff --git a/mobile/android/services/strings.xml.in b/mobile/android/services/strings.xml.in
+--- a/mobile/android/services/strings.xml.in
++++ b/mobile/android/services/strings.xml.in
+@@ -1,108 +1,51 @@
+ <!-- This Source Code Form is subject to the terms of the Mozilla Public
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+   <!-- Used for setup success. -->
+   <string name="brand_short_name">&brandShortName;</string>
+ 
+-  <string name="sync_app_name">&sync.app.name.label;</string>
+-  <string name="sync_title_connect">&sync.title.adddevice.label;</string>
+-  <string name="sync_title_pair">&sync.title.pair.label;</string>
+-
+   <!-- J-PAKE PIN Screen -->
+-  <string name="sync_subtitle_header">&sync.subtitle.header2.label;</string>
+-  <string name="sync_subtitle_connect">&sync.subtitle.connectlocation2.label;</string>
+-  <string name="sync_subtitle_pair">&sync.pair.connectlocation.label;</string>
+-  <string name="sync_pin_default">&sync.pin.oneline.label;</string>
+-  <string name="sync_link_show"><u>&sync.link.show.label;</u></string>
+-  <string name="sync_link_advancedsetup"><u>&sync.link.advancedsetup.label;</u></string>
+-
++ 
+   <!-- J-PAKE Waiting Screen -->
+ 
+-  <string name="sync_jpake_subtitle_waiting">&sync.jpake.subtitle.waiting.label;</string>
+-
+   <!-- Account Login Screen -->
+-  <string name="sync_subtitle_account">&sync.subtitle.account.label;</string>
+-  <string name="sync_input_username">&sync.input.username.label;</string>
+-  <string name="sync_input_password">&sync.input.password.label;</string>
+-  <string name="sync_input_key">&sync.input.key.label;</string>
+-  <string name="sync_checkbox_server">&sync.checkbox.server.label;</string>
+-  <string name="sync_input_server">&sync.input.server.label;</string>
+ 
+   <!-- Setup Fail -->
+-  <string name="sync_title_fail">&sync.title.fail.label;</string>
+-  <string name="sync_subtitle_fail">&sync.subtitle.fail.label;</string>
+-  <string name="sync_button_tryagain">&sync.button.tryagain.label;</string>
+-  <string name="sync_button_manual">&sync.button.manual.label;</string>
+-  <string name="sync_subtitle_nointernet">&sync.subtitle.nointernet.label;</string>
+-  <string name="sync_subtitle_failaccount">&sync.subtitle.failaccount.label;</string>
+-  <string name="sync_subtitle_failmultiple">&sync.subtitle.failmultiple.label;</string>
+-
++  
+   <!-- Setup Success -->
+-  <string name="sync_title_success">&sync.title.success.label;</string>
+-  <string name="sync_subtitle_success">&sync.subtitle.success.label1;</string>
+-  <string name="sync_settings">&sync.settings.label;</string>
+-  <string name="sync_subtitle_manage">&sync.subtitle.manage.label1;</string>
+-
++  
+   <!-- Pair Device -->
+-  <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
+-
++  
+   <!-- Firefox SyncAdapter Settings Screen -->
+-  <string name="sync_settings_options">&sync.settings.options.label;</string>
+-  <string name="sync_settings_summary_pair">&sync.summary.pair.label;</string>
+-
++ 
+   <!-- Configure Engines -->
+-  <string name="sync_configure_engines_title">&sync.configure.engines.title.label;</string>
+-  <string name="sync_configure_engines_sync_my_title">&sync.configure.engines.sync.my.title.label;</string>
+-  <string name="sync_configure_engines_title_bookmarks">&sync.configure.engines.title.bookmarks;</string>
+-  <string name="sync_configure_engines_title_passwords">&sync.configure.engines.title.passwords2;</string>
+-  <string name="sync_configure_engines_title_history">&sync.configure.engines.title.history;</string>
+-  <string name="sync_configure_engines_title_tabs">&sync.configure.engines.title.tabs;</string>
+-
++  
+   <!-- Common text -->
+-  <string name="sync_button_cancel">&sync.button.cancel.label;</string>
+-  <string name="sync_button_connect">&sync.button.connect.label;</string>
+-  <string name="sync_button_ok">&sync.button.ok.label;</string>
+-
++  
+   <!-- Account strings -->
+-  <string name="sync_account_label">&sync.account.label;</string>
+-
++  
+   <!-- Bookmark folder strings -->
+   <string name="bookmarks_folder_menu">&bookmarks.folder.menu.label;</string>
+   <string name="bookmarks_folder_places">&bookmarks.folder.places.label;</string>
+   <string name="bookmarks_folder_tags">&bookmarks.folder.tags.label;</string>
+   <string name="bookmarks_folder_toolbar">&bookmarks.folder.toolbar.label;</string>
+   <string name="bookmarks_folder_unfiled">&bookmarks.folder.unfiled.label;</string>
+   <string name="bookmarks_folder_desktop">&bookmarks.folder.desktop.label;</string>
+   <string name="bookmarks_folder_mobile">&bookmarks.folder.mobile.label;</string>
+   <string name="bookmarks_folder_reading_list">&bookmarks.folder.readinglist.label;</string>
+   <string name="bookmarks_folder_pinned">&bookmarks.folder.pinned.label;</string>
+ 
+   <!-- Notification strings -->
+-  <string name="sync_notification_oneaccount">&sync.notification.oneaccount.label;</string>
+-  <string name="sync_notification_savedprefs">&sync.notification.configure.saved;</string>
+-
++ 
+   <!-- Incorrect settings and changing credentials. -->
+-  <string name="sync_invalidcreds_label">&sync.invalidcreds.label;</string>
+-  <string name="sync_invalidserver_label">&sync.invalidserver.label;</string>
+-  <string name="sync_verifying_label">&sync.verifying.label;</string>
+-  <string name="sync_new_recoverykey_status_incorrect">&sync.new.recoverykey.status.incorrect;</string>
+-
++  
+   <!-- Send tab to device. -->
+-  <string name="sync_new_tab">&new_tab;</string>
+-  <string name="sync_title_send_tab">&sync.title.send.tab.label;</string>
+-  <string name="sync_button_send">&sync.button.send.label;</string>
+-  <string name="sync_button_set_up_sync">&sync.button.set.up.sync.label;</string>
+-  <string name="sync_title_redirect_to_set_up_sync">&sync.title.redirect.to.set.up.sync.label;</string>
+-  <string name="sync_text_redirect_to_set_up_sync">&sync.text.redirect.to.set.up.sync.label;</string>
+-  <string name="sync_text_tab_sent">&sync.text.tab.sent.label;</string>
+-  <string name="sync_text_tab_not_sent">&sync.text.tab.not.sent.label;</string>
+-  <string name="sync_default_client_name">&sync.default.client.name;</string>
+ 
+ <string name="browser_intent_package">@ANDROID_PACKAGE_NAME@</string>
+ <string name="browser_intent_class">@ANDROID_PACKAGE_NAME@.App</string>
+ 
+ <!-- Firefox Account strings. -->
+ 
+ <string name="fxaccount_full_label">&fxaccount_full_label;</string>
+ 
