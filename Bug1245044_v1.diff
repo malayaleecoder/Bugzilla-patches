@@ -1,0 +1,12 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1454484257 -19800
+#      Wed Feb 03 12:54:17 2016 +0530
+# Branch Bug1245044
+# Node ID a33c2f90160f597ba3f76b393a0897e688b5f441
+# Parent  f39cc9cc9e526612b49bf701cde840370d0cbeb9
+Bug 1245044 - Move Restrictions class to restrictions package
+
+diff --git a/mobile/android/base/java/org/mozilla/gecko/Restrictions.java b/mobile/android/base/java/org/mozilla/gecko/restrictions/Restrictions.java
+rename from mobile/android/base/java/org/mozilla/gecko/Restrictions.java
+rename to mobile/android/base/java/org/mozilla/gecko/restrictions/Restrictions.java
