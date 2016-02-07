@@ -1,0 +1,72 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1454879123 -19800
+#      Mon Feb 08 02:35:23 2016 +0530
+# Branch Bug1228478
+# Node ID e2435ed580853c53451abefab4cbd75520a23d40
+# Parent  11649852f17538ab1b4d58667581daf7f6bb2269
+Bug1228478_v1
+
+diff --git a/browser/themes/shared/incontentprefs/preferences.inc.css b/browser/themes/shared/incontentprefs/preferences.inc.css
+--- a/browser/themes/shared/incontentprefs/preferences.inc.css
++++ b/browser/themes/shared/incontentprefs/preferences.inc.css
+@@ -542,17 +542,17 @@ description > html|a {
+ }
+ 
+ .fxaAccountBoxButtons > button:first-child {
+   margin-right: 14px !important;
+ }
+ 
+ .fxaSyncIllustration {
+   width: 231px;
+-  list-style-image: url(chrome://browser/skin/fxa/sync-illustration.png)
++  list-style-image: url(chrome://browser/skin/fxa/sync-illustration.svg);
+ }
+ 
+ #fxaEmailAddress1,
+ #fxaEmailAddress2,
+ #fxaEmailAddress3 {
+   word-break: break-all;
+ }
+ 
+@@ -582,18 +582,15 @@ description > html|a {
+ }
+ 
+ #tosPP-small {
+   margin-top: 20px;
+   margin-bottom: 20px;
+ }
+ 
+ @media (min-resolution: 1.1dppx) {
+-  .fxaSyncIllustration {
+-    list-style-image: url(chrome://browser/skin/fxa/sync-illustration@2x.png)
+-  }
+   .fxaFirefoxLogo {
+     list-style-image: url(chrome://browser/skin/fxa/logo@2x.png);
+   }
+   #fxaProfileImage {
+     list-style-image: url(chrome://browser/skin/fxa/default-avatar@2x.png);
+   }
+ }
+diff --git a/browser/themes/shared/jar.inc.mn b/browser/themes/shared/jar.inc.mn
+--- a/browser/themes/shared/jar.inc.mn
++++ b/browser/themes/shared/jar.inc.mn
+@@ -71,18 +71,16 @@
+   skin/classic/browser/newtab/whimsycorn.png                   (../shared/newtab/whimsycorn.png)
+   skin/classic/browser/preferences/in-content/favicon.ico      (../shared/incontentprefs/favicon.ico)
+   skin/classic/browser/preferences/in-content/icons.svg        (../shared/incontentprefs/icons.svg)
+   skin/classic/browser/preferences/in-content/search.css       (../shared/incontentprefs/search.css)
+   skin/classic/browser/fxa/default-avatar.png                  (../shared/fxa/default-avatar.png)
+   skin/classic/browser/fxa/default-avatar@2x.png               (../shared/fxa/default-avatar@2x.png)
+   skin/classic/browser/fxa/logo.png                            (../shared/fxa/logo.png)
+   skin/classic/browser/fxa/logo@2x.png                         (../shared/fxa/logo@2x.png)
+-  skin/classic/browser/fxa/sync-illustration.png               (../shared/fxa/sync-illustration.png)
+-  skin/classic/browser/fxa/sync-illustration@2x.png            (../shared/fxa/sync-illustration@2x.png)
+   skin/classic/browser/fxa/sync-illustration.svg               (../shared/fxa/sync-illustration.svg)
+   skin/classic/browser/fxa/android.png                         (../shared/fxa/android.png)
+   skin/classic/browser/fxa/android@2x.png                      (../shared/fxa/android@2x.png)
+   skin/classic/browser/search-pref.png                         (../shared/search/search-pref.png)
+   skin/classic/browser/search-indicator.png                    (../shared/search/search-indicator.png)
+   skin/classic/browser/search-indicator@2x.png                 (../shared/search/search-indicator@2x.png)
+   skin/classic/browser/search-engine-placeholder.png           (../shared/search/search-engine-placeholder.png)
+   skin/classic/browser/search-engine-placeholder@2x.png        (../shared/search/search-engine-placeholder@2x.png)
