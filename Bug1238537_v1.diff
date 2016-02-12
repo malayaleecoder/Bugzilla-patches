@@ -1,0 +1,153 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455259510 -19800
+#      Fri Feb 12 12:15:10 2016 +0530
+# Branch Bug1238537
+# Node ID 7ed9324b06bf174b2d8335fc732defab661565e5
+# Parent  31a2bcd919d4446e2dff7b600abb87319cf3ae19
+Bug 1238537 - make nsBrowserContentHandler.js use Services.jsm
+
+diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/nsBrowserContentHandler.js
+--- a/browser/components/nsBrowserContentHandler.js
++++ b/browser/components/nsBrowserContentHandler.js
+@@ -54,37 +54,35 @@ function shouldLoadURI(aURI) {
+ 
+   dump("*** Preventing external load of chrome: URI into browser window\n");
+   dump("    Use --chrome <uri> instead\n");
+   return false;
+ }
+ 
+ function resolveURIInternal(aCmdLine, aArgument) {
+   var uri = aCmdLine.resolveURI(aArgument);
+-  var urifixup = Components.classes["@mozilla.org/docshell/urifixup;1"]
+-                           .getService(nsIURIFixup);
+ 
+   if (!(uri instanceof nsIFileURL)) {
+-    return urifixup.createFixupURI(aArgument,
+-                                   urifixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
++    return Services.uriFixup.createFixupURI(aArgument,
++                                   Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
+   }
+ 
+   try {
+     if (uri.file.exists())
+       return uri;
+   }
+   catch (e) {
+     Components.utils.reportError(e);
+   }
+ 
+   // We have interpreted the argument as a relative file URI, but the file
+   // doesn't exist. Try URI fixup heuristics: see bug 290782.
+  
+   try {
+-    uri = urifixup.createFixupURI(aArgument, 0);
++    uri = Services.uriFixup.createFixupURI(aArgument, 0);
+   }
+   catch (e) {
+     Components.utils.reportError(e);
+   }
+ 
+   return uri;
+ }
+ 
+@@ -176,29 +174,26 @@ function getPostUpdateOverridePage(defau
+ 
+   return update.getProperty("openURL") || defaultOverridePage;
+ }
+ 
+ // Flag used to indicate that the arguments to openWindow can be passed directly.
+ const NO_EXTERNAL_URIS = 1;
+ 
+ function openWindow(parent, url, target, features, args, noExternalArgs) {
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+   if (noExternalArgs == NO_EXTERNAL_URIS) {
+     // Just pass in the defaultArgs directly
+     var argstring;
+     if (args) {
+       argstring = Components.classes["@mozilla.org/supports-string;1"]
+                             .createInstance(nsISupportsString);
+       argstring.data = args;
+     }
+ 
+-    return wwatch.openWindow(parent, url, target, features, argstring);
++    return Services.ww.openWindow(parent, url, target, features, argstring);
+   }
+   
+   // Pass an array to avoid the browser "|"-splitting behavior.
+   var argArray = Components.classes["@mozilla.org/supports-array;1"]
+                     .createInstance(Components.interfaces.nsISupportsArray);
+ 
+   // add args to the arguments array
+   var stringArgs = null;
+@@ -225,42 +220,38 @@ function openWindow(parent, url, target,
+   // Pass these as null to ensure that we always trigger the "single URL"
+   // behavior in browser.js's gBrowserInit.onLoad (which handles the window
+   // arguments)
+   argArray.AppendElement(null); // charset
+   argArray.AppendElement(null); // referer
+   argArray.AppendElement(null); // postData
+   argArray.AppendElement(null); // allowThirdPartyFixup
+ 
+-  return wwatch.openWindow(parent, url, target, features, argArray);
++  return Services.ww.openWindow(parent, url, target, features, argArray);
+ }
+ 
+ function openPreferences() {
+   var sa = Components.classes["@mozilla.org/supports-array;1"]
+                      .createInstance(Components.interfaces.nsISupportsArray);
+ 
+   var wuri = Components.classes["@mozilla.org/supports-string;1"]
+                        .createInstance(Components.interfaces.nsISupportsString);
+   wuri.data = "about:preferences";
+ 
+   sa.AppendElement(wuri);
+ 
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+-  wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
++  Services.ww.openWindow(null, gBrowserContentHandler.chromeURL,
+                     "_blank",
+                     "chrome,dialog=no,all",
+                     sa);
+ }
+ 
+ function getMostRecentWindow(aType) {
+-  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+-                     .getService(nsIWindowMediator);
+-  return wm.getMostRecentWindow(aType);
++
++  return Services.wm.getMostRecentWindow(aType);
+ }
+ 
+ function logSystemBasedSearch(engine) {
+   var countId = (engine.identifier || ("other-" + engine.name)) + ".system";
+   var count = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+   count.add(countId);
+ }
+ 
+@@ -281,20 +272,17 @@ function doSearch(searchTerm, cmdLine) {
+   sa.AppendElement(wuri);
+   sa.AppendElement(null);
+   sa.AppendElement(null);
+   sa.AppendElement(submission.postData);
+ 
+   // XXXbsmedberg: use handURIToExistingBrowser to obey tabbed-browsing
+   // preferences, but need nsIBrowserDOMWindow extensions
+ 
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+-  return wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
++  return Services.ww.openWindow(null, gBrowserContentHandler.chromeURL,
+                            "_blank",
+                            "chrome,dialog=no,all" +
+                            gBrowserContentHandler.getFeatures(cmdLine),
+                            sa);
+ }
+ 
+ function nsBrowserContentHandler() {
+ }
