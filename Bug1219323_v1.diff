@@ -1,0 +1,74 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455305129 -19800
+#      Sat Feb 13 00:55:29 2016 +0530
+# Branch Bug1219323
+# Node ID d1f89f6be1227c6bb63dfe0895eebb95b1f414f2
+# Parent  1c86c16eac9fa343ac22e8c7f8313104ea9f5d49
+Bug 1219323 - Remove unnecessary table created check from BrowserDatabaseHelper
+
+diff --git a/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java b/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
+--- a/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
++++ b/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
+@@ -984,21 +984,16 @@ final class BrowserDatabaseHelper extend
+                 FileUtils.delete(file);
+             } catch (Exception e) {
+                 Log.e(LOGTAG, "Exception occurred while trying to delete " + file.getPath() + "; ignoring.", e);
+             }
+         }
+     }
+ 
+     private void upgradeDatabaseFrom24to25(SQLiteDatabase db) {
+-        if (didCreateTabsTable) {
+-            debug("No need to rev tabs schema; foreign key constraint exists.");
+-            return;
+-        }
+-
+         debug("Rewriting tabs table.");
+         createTabsTable(db, "tmp_tabs");
+ 
+         // Remove indexes. We don't need them now, and we'll be throwing away the table.
+         db.execSQL("DROP INDEX IF EXISTS " + TabsProvider.INDEX_TABS_GUID);
+         db.execSQL("DROP INDEX IF EXISTS " + TabsProvider.INDEX_TABS_POSITION);
+ 
+         db.execSQL("INSERT INTO tmp_tabs (" +
+@@ -1015,17 +1010,17 @@ final class BrowserDatabaseHelper extend
+                         "SELECT " +
+                         "_id, client_guid, title, url, history, favicon, last_used, position" +
+                         " FROM " + TABLE_TABS);
+ 
+         // Now switch these tables over and recreate the indices.
+         db.execSQL("DROP TABLE " + TABLE_TABS);
+         db.execSQL("ALTER TABLE tmp_tabs RENAME TO " + TABLE_TABS);
+         createTabsTableIndices(db, TABLE_TABS);
+-        didCreateTabsTable =true;
++        didCreateTabsTable = true;
+     }
+ 
+     private void upgradeDatabaseFrom25to26(SQLiteDatabase db) {
+         debug("Dropping unnecessary indices");
+         db.execSQL("DROP INDEX IF EXISTS clients_guid_index");
+         db.execSQL("DROP INDEX IF EXISTS thumbnails_url_index");
+         db.execSQL("DROP INDEX IF EXISTS favicons_url_index");
+     }
+diff --git a/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java b/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
+--- a/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
++++ b/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
+@@ -162,17 +162,16 @@ public class TabsProvider extends Shared
+             case CLIENTS_ID:
+                 trace("Delete on CLIENTS_ID: " + uri);
+                 selection = DBUtils.concatenateWhere(selection, selectColumn(TABLE_CLIENTS, Clients._ID));
+                 selectionArgs = DBUtils.appendSelectionArgs(selectionArgs,
+                         new String[] { Long.toString(ContentUris.parseId(uri)) });
+                 // fall through
+             case CLIENTS:
+                 trace("Delete on CLIENTS: " + uri);
+-                // Delete from both TABLE_TABS and TABLE_CLIENTS.
+                 deleted = deleteValues(uri, selection, selectionArgs, TABLE_CLIENTS);
+                 break;
+ 
+             case TABS_ID:
+                 trace("Delete on TABS_ID: " + uri);
+                 selection = DBUtils.concatenateWhere(selection, selectColumn(TABLE_TABS, Tabs._ID));
+                 selectionArgs = DBUtils.appendSelectionArgs(selectionArgs,
+                         new String[] { Long.toString(ContentUris.parseId(uri)) });
