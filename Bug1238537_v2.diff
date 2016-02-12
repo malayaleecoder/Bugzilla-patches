@@ -1,0 +1,272 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455296458 -19800
+#      Fri Feb 12 22:30:58 2016 +0530
+# Branch Bug1219323
+# Node ID 895845a2aedd09438c58678c6264d5b830ad1474
+# Parent  31a2bcd919d4446e2dff7b600abb87319cf3ae19
+Bug 1238537 - nsBrowserContentHandler.js use Services.jsm
+
+diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/nsBrowserContentHandler.js
+--- a/browser/components/nsBrowserContentHandler.js
++++ b/browser/components/nsBrowserContentHandler.js
+@@ -29,23 +29,19 @@ const nsICommandLine         = Component
+ const nsICommandLineHandler  = Components.interfaces.nsICommandLineHandler;
+ const nsIContentHandler      = Components.interfaces.nsIContentHandler;
+ const nsIDocShellTreeItem    = Components.interfaces.nsIDocShellTreeItem;
+ const nsIDOMChromeWindow     = Components.interfaces.nsIDOMChromeWindow;
+ const nsIDOMWindow           = Components.interfaces.nsIDOMWindow;
+ const nsIFileURL             = Components.interfaces.nsIFileURL;
+ const nsIInterfaceRequestor  = Components.interfaces.nsIInterfaceRequestor;
+ const nsINetUtil             = Components.interfaces.nsINetUtil;
+-const nsIPrefBranch          = Components.interfaces.nsIPrefBranch;
+ const nsIPrefLocalizedString = Components.interfaces.nsIPrefLocalizedString;
+ const nsISupportsString      = Components.interfaces.nsISupportsString;
+-const nsIURIFixup            = Components.interfaces.nsIURIFixup;
+ const nsIWebNavigation       = Components.interfaces.nsIWebNavigation;
+-const nsIWindowMediator      = Components.interfaces.nsIWindowMediator;
+-const nsIWindowWatcher       = Components.interfaces.nsIWindowWatcher;
+ const nsIWebNavigationInfo   = Components.interfaces.nsIWebNavigationInfo;
+ const nsICommandLineValidator = Components.interfaces.nsICommandLineValidator;
+ 
+ const NS_BINDING_ABORTED = Components.results.NS_BINDING_ABORTED;
+ const NS_ERROR_WONT_HANDLE_CONTENT = 0x805d0001;
+ const NS_ERROR_ABORT = Components.results.NS_ERROR_ABORT;
+ 
+ function shouldLoadURI(aURI) {
+@@ -54,37 +50,36 @@ function shouldLoadURI(aURI) {
+ 
+   dump("*** Preventing external load of chrome: URI into browser window\n");
+   dump("    Use --chrome <uri> instead\n");
+   return false;
+ }
+ 
+ function resolveURIInternal(aCmdLine, aArgument) {
+   var uri = aCmdLine.resolveURI(aArgument);
+-  var urifixup = Components.classes["@mozilla.org/docshell/urifixup;1"]
+-                           .getService(nsIURIFixup);
++  var uriFixup = Services.uriFixup;
+ 
+   if (!(uri instanceof nsIFileURL)) {
+-    return urifixup.createFixupURI(aArgument,
+-                                   urifixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
++    return uriFixup.createFixupURI(aArgument,
++                                   uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
+   }
+ 
+   try {
+     if (uri.file.exists())
+       return uri;
+   }
+   catch (e) {
+     Components.utils.reportError(e);
+   }
+ 
+   // We have interpreted the argument as a relative file URI, but the file
+   // doesn't exist. Try URI fixup heuristics: see bug 290782.
+  
+   try {
+-    uri = urifixup.createFixupURI(aArgument, 0);
++    uri = uriFixup.createFixupURI(aArgument, 0);
+   }
+   catch (e) {
+     Components.utils.reportError(e);
+   }
+ 
+   return uri;
+ }
+ 
+@@ -176,29 +171,26 @@ function getPostUpdateOverridePage(defau
+ 
+   return update.getProperty("openURL") || defaultOverridePage;
+ }
+ 
+ // Flag used to indicate that the arguments to openWindow can be passed directly.
+ const NO_EXTERNAL_URIS = 1;
+ 
+ function openWindow(parent, url, target, features, args, noExternalArgs) {
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+   if (noExternalArgs == NO_EXTERNAL_URIS) {
+     // Just pass in the defaultArgs directly
+     var argstring;
+     if (args) {
+       argstring = Components.classes["@mozilla.org/supports-string;1"]
+                             .createInstance(nsISupportsString);
+       argstring.data = args;
+     }
+ 
+-    return wwatch.openWindow(parent, url, target, features, argstring);
++    return Services.ww.openWindow(parent, url, target, features, argstring);
+   }
+   
+   // Pass an array to avoid the browser "|"-splitting behavior.
+   var argArray = Components.classes["@mozilla.org/supports-array;1"]
+                     .createInstance(Components.interfaces.nsISupportsArray);
+ 
+   // add args to the arguments array
+   var stringArgs = null;
+@@ -225,42 +217,38 @@ function openWindow(parent, url, target,
+   // Pass these as null to ensure that we always trigger the "single URL"
+   // behavior in browser.js's gBrowserInit.onLoad (which handles the window
+   // arguments)
+   argArray.AppendElement(null); // charset
+   argArray.AppendElement(null); // referer
+   argArray.AppendElement(null); // postData
+   argArray.AppendElement(null); // allowThirdPartyFixup
+ 
+-  return wwatch.openWindow(parent, url, target, features, argArray);
++  return Services.ww.openWindow(parent, url, target, features, argArray);
+ }
+ 
+ function openPreferences() {
+   var sa = Components.classes["@mozilla.org/supports-array;1"]
+                      .createInstance(Components.interfaces.nsISupportsArray);
+ 
+   var wuri = Components.classes["@mozilla.org/supports-string;1"]
+                        .createInstance(Components.interfaces.nsISupportsString);
+   wuri.data = "about:preferences";
+ 
+   sa.AppendElement(wuri);
+ 
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+-  wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
+-                    "_blank",
+-                    "chrome,dialog=no,all",
+-                    sa);
++  Services.ww.openWindow(null, gBrowserContentHandler.chromeURL,
++                         "_blank",
++                         "chrome,dialog=no,all",
++                         sa);
+ }
+ 
+ function getMostRecentWindow(aType) {
+-  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+-                     .getService(nsIWindowMediator);
+-  return wm.getMostRecentWindow(aType);
++
++  return Services.wm.getMostRecentWindow(aType);
+ }
+ 
+ function logSystemBasedSearch(engine) {
+   var countId = (engine.identifier || ("other-" + engine.name)) + ".system";
+   var count = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+   count.add(countId);
+ }
+ 
+@@ -281,24 +269,21 @@ function doSearch(searchTerm, cmdLine) {
+   sa.AppendElement(wuri);
+   sa.AppendElement(null);
+   sa.AppendElement(null);
+   sa.AppendElement(submission.postData);
+ 
+   // XXXbsmedberg: use handURIToExistingBrowser to obey tabbed-browsing
+   // preferences, but need nsIBrowserDOMWindow extensions
+ 
+-  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+-                         .getService(nsIWindowWatcher);
+-
+-  return wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
+-                           "_blank",
+-                           "chrome,dialog=no,all" +
+-                           gBrowserContentHandler.getFeatures(cmdLine),
+-                           sa);
++  return Services.ww.openWindow(null, gBrowserContentHandler.chromeURL,
++                                "_blank",
++                                "chrome,dialog=no,all" +
++                                gBrowserContentHandler.getFeatures(cmdLine),
++                                sa);
+ }
+ 
+ function nsBrowserContentHandler() {
+ }
+ nsBrowserContentHandler.prototype = {
+   classID: Components.ID("{5d0ce354-df01-421a-83fb-7ead0990c24e}"),
+ 
+   _xpcom_factory: {
+@@ -312,19 +297,17 @@ nsBrowserContentHandler.prototype = {
+   /* helper functions */
+ 
+   mChromeURL : null,
+ 
+   get chromeURL() {
+     if (this.mChromeURL) {
+       return this.mChromeURL;
+     }
+-
+-    var prefb = Components.classes["@mozilla.org/preferences-service;1"]
+-                          .getService(nsIPrefBranch);
++    var prefb = Services.prefs;
+     this.mChromeURL = prefb.getCharPref("browser.chromeURL");
+ 
+     return this.mChromeURL;
+   },
+ 
+   /* nsISupports */
+   QueryInterface : XPCOMUtils.generateQI([nsICommandLineHandler,
+                                           nsIBrowserHandler,
+@@ -447,19 +430,17 @@ nsBrowserContentHandler.prototype = {
+     // PB builds.
+     if (cmdLine.handleFlag("private", false)) {
+       PrivateBrowsingUtils.enterTemporaryAutoStartMode();
+     }
+ 
+     var fileParam = cmdLine.handleFlagWithParam("file", false);
+     if (fileParam) {
+       var file = cmdLine.resolveFile(fileParam);
+-      var ios = Components.classes["@mozilla.org/network/io-service;1"]
+-                          .getService(Components.interfaces.nsIIOService);
+-      var fileURI = ios.newFileURI(file);
++      var fileURI = Services.io.newFileURI(file);
+       openWindow(null, this.chromeURL, "_blank",
+                  "chrome,dialog=no,all" + this.getFeatures(cmdLine),
+                  fileURI.spec);
+       cmdLine.preventDefault = true;
+     }
+ 
+     if (AppConstants.platform  == "win") {
+       // Handle "? searchterm" for Windows Vista start menu integration
+@@ -489,18 +470,17 @@ nsBrowserContentHandler.prototype = {
+     }
+     info += "  --search <term>    Search <term> with your default search engine.\n";
+     return info;
+   },
+ 
+   /* nsIBrowserHandler */
+ 
+   get defaultArgs() {
+-    var prefb = Components.classes["@mozilla.org/preferences-service;1"]
+-                          .getService(nsIPrefBranch);
++    var prefb = Services.prefs;
+ 
+     if (!gFirstWindow) {
+       gFirstWindow = true;
+       if (PrivateBrowsingUtils.isInTemporaryAutoStartMode) {
+         return "about:privatebrowsing";
+       }
+     }
+ 
+@@ -742,19 +722,17 @@ nsDefaultCommandLineHandler.prototype = 
+       // displayed) we will crash if we open an url and then select a profile. To
+       // prevent this handle all url command line flags and set the command line's
+       // preventDefault to true to prevent the display of the ui. The initial
+       // command line will be retained when nsAppRunner calls LaunchChild though
+       // urls launched after the initial launch will be lost.
+       if (!this._haveProfile) {
+         try {
+           // This will throw when a profile has not been selected.
+-          var fl = Components.classes["@mozilla.org/file/directory_service;1"]
+-                             .getService(Components.interfaces.nsIProperties);
+-          var dir = fl.get("ProfD", Components.interfaces.nsILocalFile);
++          var dir = Services.dirsvc.get("ProfD", Components.interfaces.nsILocalFile);
+           this._haveProfile = true;
+         }
+         catch (e) {
+           while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
+           cmdLine.preventDefault = true;
+         }
+       }
+     }
