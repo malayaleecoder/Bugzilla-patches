@@ -1,0 +1,216 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455561383 -19800
+#      Tue Feb 16 00:06:23 2016 +0530
+# Branch Bug1219323
+# Node ID 966dbaff291373b8a8548cb136eb5deab409565b
+# Parent  1c86c16eac9fa343ac22e8c7f8313104ea9f5d49
+Bug 1219323 - Remove unnecessary table created check from BrowserDatabaseHelper
+
+diff --git a/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java b/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
+--- a/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
++++ b/mobile/android/base/java/org/mozilla/gecko/db/BrowserDatabaseHelper.java
+@@ -183,17 +183,16 @@ final class BrowserDatabaseHelper extend
+         db.execSQL("CREATE TABLE " + TABLE_CLIENTS + "(" +
+                 BrowserContract.Clients.GUID + " TEXT PRIMARY KEY," +
+                 BrowserContract.Clients.NAME + " TEXT," +
+                 BrowserContract.Clients.LAST_MODIFIED + " INTEGER," +
+                 BrowserContract.Clients.DEVICE_TYPE + " TEXT" +
+                 ");");
+     }
+ 
+-    private boolean didCreateTabsTable = false;
+     private void createTabsTable(SQLiteDatabase db, final String tableName) {
+         debug("Creating tabs.db: " + db.getPath());
+         debug("Creating " + tableName + " table");
+ 
+         // Table for each tab on any client.
+         db.execSQL("CREATE TABLE " + tableName + "(" +
+                 BrowserContract.Tabs._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                 BrowserContract.Tabs.CLIENT_GUID + " TEXT," +
+@@ -335,44 +334,41 @@ final class BrowserDatabaseHelper extend
+ 
+         createBookmarksTable(db);
+         createHistoryTable(db);
+         createFaviconsTable(db);
+         createThumbnailsTable(db);
+         createClientsTable(db);
+         createLocalClient(db);
+         createTabsTable(db, TABLE_TABS);
+-        didCreateTabsTable = true;
+         createTabsTableIndices(db, TABLE_TABS);
+ 
+ 
+         createBookmarksWithFaviconsView(db);
+         createHistoryWithFaviconsView(db);
+         createCombinedViewOn19(db);
+ 
+         createOrUpdateSpecialFolder(db, Bookmarks.PLACES_FOLDER_GUID,
+             R.string.bookmarks_folder_places, 0);
+ 
+         createOrUpdateAllSpecialFolders(db);
+         createSearchHistoryTable(db);
+         createReadingListTable(db, TABLE_READING_LIST);
+-        didCreateCurrentReadingListTable = true;      // Mostly correct, in the absence of transactions.
+         createReadingListIndices(db, TABLE_READING_LIST);
+     }
+ 
+     /**
+      * Copies the tabs and clients tables out of the given tabs.db file and into the destinationDB.
+      *
+      * @param tabsDBFile Path to existing tabs.db.
+      * @param destinationDB The destination database.
+      */
+     public void copyTabsDB(File tabsDBFile, SQLiteDatabase destinationDB) {
+         createClientsTable(destinationDB);
+         createTabsTable(destinationDB, TABLE_TABS);
+-        didCreateTabsTable = true;
+         createTabsTableIndices(destinationDB, TABLE_TABS);
+ 
+         SQLiteDatabase oldTabsDB = null;
+         try {
+             oldTabsDB = SQLiteDatabase.openDatabase(tabsDBFile.getPath(), null, SQLiteDatabase.OPEN_READONLY);
+ 
+             if (!DBUtils.copyTable(oldTabsDB, TABLE_CLIENTS, destinationDB, TABLE_CLIENTS)) {
+                 Log.e(LOGTAG, "Failed to migrate table clients; ignoring.");
+@@ -398,17 +394,16 @@ final class BrowserDatabaseHelper extend
+                     SearchHistory.QUERY + " TEXT UNIQUE NOT NULL, " +
+                     SearchHistory.DATE_LAST_VISITED + " INTEGER, " +
+                     SearchHistory.VISITS + " INTEGER ) ");
+ 
+         db.execSQL("CREATE INDEX idx_search_history_last_visited ON " +
+                 SearchHistory.TABLE_NAME + "(" + SearchHistory.DATE_LAST_VISITED + ")");
+     }
+ 
+-    private boolean didCreateCurrentReadingListTable = false;
+     private void createReadingListTable(final SQLiteDatabase db, final String tableName) {
+         debug("Creating " + TABLE_READING_LIST + " table");
+ 
+         db.execSQL("CREATE TABLE " + tableName + "(" +
+                    ReadingListItems._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    ReadingListItems.GUID + " TEXT UNIQUE, " +                          // Server-assigned.
+ 
+                    ReadingListItems.CONTENT_STATUS + " TINYINT NOT NULL DEFAULT " + ReadingListItems.STATUS_UNFETCHED + ", " +
+@@ -861,17 +856,16 @@ final class BrowserDatabaseHelper extend
+                       Bookmarks._ID + " = ? ",
+                       new String[] { String.valueOf(Bookmarks.FIXED_READING_LIST_ID) });
+ 
+             // Create indices.
+             createReadingListIndices(db, TABLE_READING_LIST);
+ 
+             // Done.
+             db.setTransactionSuccessful();
+-            didCreateCurrentReadingListTable = true;
+ 
+         } catch (SQLException e) {
+             Log.e(LOGTAG, "Error migrating reading list items", e);
+         } finally {
+             db.endTransaction();
+         }
+     }
+ 
+@@ -888,21 +882,16 @@ final class BrowserDatabaseHelper extend
+                    " WHERE " + Bookmarks.TYPE + " IS NULL");
+     }
+ 
+     private void upgradeDatabaseFrom19to20(SQLiteDatabase db) {
+         createSearchHistoryTable(db);
+     }
+ 
+     private void upgradeDatabaseFrom21to22(SQLiteDatabase db) {
+-        if (didCreateCurrentReadingListTable) {
+-            debug("No need to add CONTENT_STATUS to reading list; we just created with the current schema.");
+-            return;
+-        }
+-
+         debug("Adding CONTENT_STATUS column to reading list table.");
+ 
+         try {
+             db.execSQL("ALTER TABLE " + TABLE_READING_LIST +
+                        " ADD COLUMN " + ReadingListItems.CONTENT_STATUS +
+                        " TINYINT DEFAULT " + ReadingListItems.STATUS_UNFETCHED);
+ 
+             db.execSQL("CREATE INDEX reading_list_content_status ON " + TABLE_READING_LIST + "("
+@@ -910,21 +899,16 @@ final class BrowserDatabaseHelper extend
+         } catch (SQLiteException e) {
+             // We're betting that an error here means that the table already has the column,
+             // so we're failing due to the duplicate column name.
+             Log.e(LOGTAG, "Error upgrading database from 21 to 22", e);
+         }
+     }
+ 
+     private void upgradeDatabaseFrom22to23(SQLiteDatabase db) {
+-        if (didCreateCurrentReadingListTable) {
+-            debug("No need to rev reading list schema; we just created with the current schema.");
+-            return;
+-        }
+-
+         debug("Rewriting reading list table.");
+         createReadingListTable(db, "tmp_rl");
+ 
+         // Remove indexes. We don't need them now, and we'll be throwing away the table.
+         db.execSQL("DROP INDEX IF EXISTS reading_list_url");
+         db.execSQL("DROP INDEX IF EXISTS reading_list_guid");
+         db.execSQL("DROP INDEX IF EXISTS reading_list_content_status");
+ 
+@@ -984,21 +968,16 @@ final class BrowserDatabaseHelper extend
+                 FileUtils.delete(file);
+             } catch (Exception e) {
+                 Log.e(LOGTAG, "Exception occurred while trying to delete " + file.getPath() + "; ignoring.", e);
+             }
+         }
+     }
+ 
+     private void upgradeDatabaseFrom24to25(SQLiteDatabase db) {
+-        if (didCreateTabsTable) {
+-            debug("No need to rev tabs schema; foreign key constraint exists.");
+-            return;
+-        }
+-
+         debug("Rewriting tabs table.");
+         createTabsTable(db, "tmp_tabs");
+ 
+         // Remove indexes. We don't need them now, and we'll be throwing away the table.
+         db.execSQL("DROP INDEX IF EXISTS " + TabsProvider.INDEX_TABS_GUID);
+         db.execSQL("DROP INDEX IF EXISTS " + TabsProvider.INDEX_TABS_POSITION);
+ 
+         db.execSQL("INSERT INTO tmp_tabs (" +
+@@ -1015,17 +994,16 @@ final class BrowserDatabaseHelper extend
+                         "SELECT " +
+                         "_id, client_guid, title, url, history, favicon, last_used, position" +
+                         " FROM " + TABLE_TABS);
+ 
+         // Now switch these tables over and recreate the indices.
+         db.execSQL("DROP TABLE " + TABLE_TABS);
+         db.execSQL("ALTER TABLE tmp_tabs RENAME TO " + TABLE_TABS);
+         createTabsTableIndices(db, TABLE_TABS);
+-        didCreateTabsTable =true;
+     }
+ 
+     private void upgradeDatabaseFrom25to26(SQLiteDatabase db) {
+         debug("Dropping unnecessary indices");
+         db.execSQL("DROP INDEX IF EXISTS clients_guid_index");
+         db.execSQL("DROP INDEX IF EXISTS thumbnails_url_index");
+         db.execSQL("DROP INDEX IF EXISTS favicons_url_index");
+     }
+diff --git a/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java b/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
+--- a/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
++++ b/mobile/android/base/java/org/mozilla/gecko/db/TabsProvider.java
+@@ -162,17 +162,16 @@ public class TabsProvider extends Shared
+             case CLIENTS_ID:
+                 trace("Delete on CLIENTS_ID: " + uri);
+                 selection = DBUtils.concatenateWhere(selection, selectColumn(TABLE_CLIENTS, Clients._ID));
+                 selectionArgs = DBUtils.appendSelectionArgs(selectionArgs,
+                         new String[] { Long.toString(ContentUris.parseId(uri)) });
+                 // fall through
+             case CLIENTS:
+                 trace("Delete on CLIENTS: " + uri);
+-                // Delete from both TABLE_TABS and TABLE_CLIENTS.
+                 deleted = deleteValues(uri, selection, selectionArgs, TABLE_CLIENTS);
+                 break;
+ 
+             case TABS_ID:
+                 trace("Delete on TABS_ID: " + uri);
+                 selection = DBUtils.concatenateWhere(selection, selectColumn(TABLE_TABS, Tabs._ID));
+                 selectionArgs = DBUtils.appendSelectionArgs(selectionArgs,
+                         new String[] { Long.toString(ContentUris.parseId(uri)) });
