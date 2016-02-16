@@ -1,10 +1,9 @@
 # HG changeset patch
 # User malayaleecoder <malayaleecoder@gmail.com>
-# Date 1455554008 -19800
-#      Mon Feb 15 22:03:28 2016 +0530
-# Branch Bug1238537
-# Node ID e31856bf9e367d9f09c953025578924020498f9a
-# Parent  31a2bcd919d4446e2dff7b600abb87319cf3ae19
+# Date 1455560379 -19800
+#      Mon Feb 15 23:49:39 2016 +0530
+# Node ID 6523ddf35d3ef36b83d4f9bd0a9791e8c7f081b2
+# Parent  ea39d4a6232c278dd8d805608a07cf9f4cc4c76b
 Bug 1238537 - make nsBrowserContentHandler.js use Services.jsm
 
 diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/nsBrowserContentHandler.js
@@ -49,8 +48,9 @@ diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/
  
    if (!(uri instanceof nsIFileURL)) {
 -    return urifixup.createFixupURI(aArgument,
+-                                   urifixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
 +    return uriFixup.createFixupURI(aArgument,
-                                    urifixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
++                                   uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS);
    }
  
    try {
@@ -63,7 +63,7 @@ diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/
  
    // We have interpreted the argument as a relative file URI, but the file
    // doesn't exist. Try URI fixup heuristics: see bug 290782.
-  
+ 
    try {
 -    uri = urifixup.createFixupURI(aArgument, 0);
 +    uri = uriFixup.createFixupURI(aArgument, 0);
@@ -99,7 +99,7 @@ diff --git a/browser/components/nsBrowserContentHandler.js b/browser/components/
 -    return wwatch.openWindow(parent, url, target, features, argstring);
 +    return Services.ww.openWindow(parent, url, target, features, argstring);
    }
-   
+ 
    // Pass an array to avoid the browser "|"-splitting behavior.
    var argArray = Components.classes["@mozilla.org/supports-array;1"]
                      .createInstance(Components.interfaces.nsISupportsArray);
