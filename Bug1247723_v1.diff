@@ -1,0 +1,31 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455810502 -19800
+#      Thu Feb 18 21:18:22 2016 +0530
+# Branch Bug1247723
+# Node ID cd96cad7d25546f961c27dfdd1ef3e530ae55c3a
+# Parent  5259b8d951366ebd049ca4011582ced5578c3d3c
+Bug 1247723 - Disable the Font Panel
+
+diff --git a/devtools/client/preferences/devtools.js b/devtools/client/preferences/devtools.js
+--- a/devtools/client/preferences/devtools.js
++++ b/devtools/client/preferences/devtools.js
+@@ -320,17 +320,17 @@ pref("devtools.editor.tabsize", 2);
+ pref("devtools.editor.expandtab", true);
+ pref("devtools.editor.keymap", "default");
+ pref("devtools.editor.autoclosebrackets", true);
+ pref("devtools.editor.detectindentation", true);
+ pref("devtools.editor.enableCodeFolding", true);
+ pref("devtools.editor.autocomplete", true);
+ 
+ // Enable the Font Inspector
+-pref("devtools.fontinspector.enabled", true);
++pref("devtools.fontinspector.enabled", false);
+ 
+ // Pref to store the browser version at the time of a telemetry ping for an
+ // opened developer tool. This allows us to ping telemetry just once per browser
+ // version for each user.
+ pref("devtools.telemetry.tools.opened.version", "{}");
+ 
+ // Enable the JSON View tool (an inspector for application/json documents) on
+ // Nightly and Dev. Edition.
