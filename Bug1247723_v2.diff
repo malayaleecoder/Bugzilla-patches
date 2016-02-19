@@ -1,0 +1,56 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1455912537 -19800
+#      Sat Feb 20 01:38:57 2016 +0530
+# Branch Bug1247723
+# Node ID 92ef93a7015950f6cc2bb73a3c5edc1cd811b755
+# Parent  5259b8d951366ebd049ca4011582ced5578c3d3c
+Bug 1247723 - Disable the Font Panel; r=pbro
+
+diff --git a/devtools/client/inspector/fonts/test/head.js b/devtools/client/inspector/fonts/test/head.js
+--- a/devtools/client/inspector/fonts/test/head.js
++++ b/devtools/client/inspector/fonts/test/head.js
+@@ -4,16 +4,21 @@
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ "use strict";
+ 
+ // Import the inspector's head.js first (which itself imports shared-head.js).
+ Services.scriptloader.loadSubScript(
+   "chrome://mochitests/content/browser/devtools/client/inspector/test/head.js",
+   this);
+ 
++Services.prefs.setBoolPref("devtools.fontinspector.enabled", true);
++registerCleanupFunction(() => {
++  Services.prefs.clearUserPref("devtools.fontinspector.enabled");
++});
++
+ /**
+  * Adds a new tab with the given URL, opens the inspector and selects the
+  * font-inspector tab.
+  * @return {Promise} resolves to a {toolbox, inspector, view} object
+  */
+ var openFontInspectorForURL = Task.async(function*(url) {
+   yield addTab(url);
+   let {toolbox, inspector} = yield openInspectorSidebarTab("fontinspector");
+diff --git a/devtools/client/preferences/devtools.js b/devtools/client/preferences/devtools.js
+--- a/devtools/client/preferences/devtools.js
++++ b/devtools/client/preferences/devtools.js
+@@ -320,17 +320,17 @@ pref("devtools.editor.tabsize", 2);
+ pref("devtools.editor.expandtab", true);
+ pref("devtools.editor.keymap", "default");
+ pref("devtools.editor.autoclosebrackets", true);
+ pref("devtools.editor.detectindentation", true);
+ pref("devtools.editor.enableCodeFolding", true);
+ pref("devtools.editor.autocomplete", true);
+ 
+ // Enable the Font Inspector
+-pref("devtools.fontinspector.enabled", true);
++pref("devtools.fontinspector.enabled", false);
+ 
+ // Pref to store the browser version at the time of a telemetry ping for an
+ // opened developer tool. This allows us to ping telemetry just once per browser
+ // version for each user.
+ pref("devtools.telemetry.tools.opened.version", "{}");
+ 
+ // Enable the JSON View tool (an inspector for application/json documents) on
+ // Nightly and Dev. Edition.
