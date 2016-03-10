@@ -1,0 +1,75 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1456894958 -19800
+#      Wed Mar 02 10:32:38 2016 +0530
+# Branch Bug1241941
+# Node ID 47b0220d77ceeee679aeff4590bed14c439656fd
+# Parent  c13a3b5175a56de4b20898146be9b670c1c4e5cb
+Bug 1241941 - [Lint: ScrollViewSize] Fix ScrollView size validation error
+
+diff --git a/mobile/android/base/resources/layout/firstrun_basepanel_fragment.xml b/mobile/android/base/resources/layout/firstrun_basepanel_fragment.xml
+--- a/mobile/android/base/resources/layout/firstrun_basepanel_fragment.xml
++++ b/mobile/android/base/resources/layout/firstrun_basepanel_fragment.xml
+@@ -6,17 +6,17 @@
+ 
+ <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="vertical"
+             android:fillViewport="true">
+ 
+     <LinearLayout android:layout_width="match_parent"
+-                  android:layout_height="match_parent"
++                  android:layout_height="wrap_content"
+                   android:minHeight="@dimen/firstrun_min_height"
+                   android:background="@color/about_page_header_grey"
+                   android:gravity="center_horizontal"
+                   android:orientation="vertical">
+ 
+         <ImageView android:id="@+id/firstrun_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/firstrun_background_height"
+diff --git a/mobile/android/base/resources/layout/firstrun_sync_fragment.xml b/mobile/android/base/resources/layout/firstrun_sync_fragment.xml
+--- a/mobile/android/base/resources/layout/firstrun_sync_fragment.xml
++++ b/mobile/android/base/resources/layout/firstrun_sync_fragment.xml
+@@ -6,17 +6,17 @@
+ 
+ <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="vertical"
+             android:fillViewport="true">
+ 
+     <LinearLayout android:layout_width="match_parent"
+-                  android:layout_height="match_parent"
++                  android:layout_height="wrap_content"
+                   android:minHeight="@dimen/firstrun_min_height"
+                   android:background="@color/about_page_header_grey"
+                   android:gravity="center_horizontal"
+                   android:orientation="vertical">
+ 
+ 
+         <ImageView android:layout_width="wrap_content"
+                    android:layout_height="@dimen/firstrun_background_height"
+diff --git a/mobile/android/base/resources/layout/firstrun_welcome_fragment.xml b/mobile/android/base/resources/layout/firstrun_welcome_fragment.xml
+--- a/mobile/android/base/resources/layout/firstrun_welcome_fragment.xml
++++ b/mobile/android/base/resources/layout/firstrun_welcome_fragment.xml
+@@ -6,17 +6,17 @@
+ 
+ <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="vertical"
+             android:fillViewport="true">
+ 
+     <LinearLayout android:layout_width="match_parent"
+-                  android:layout_height="match_parent"
++                  android:layout_height="wrap_content"
+                   android:minHeight="248dp"
+                   android:background="@color/android:white"
+                   android:gravity="center_horizontal"
+                   android:orientation="vertical">
+ 
+         <FrameLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="@color/link_blue">
