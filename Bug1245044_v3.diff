@@ -1,0 +1,41 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1457199678 -19800
+#      Sat Mar 05 23:11:18 2016 +0530
+# Branch Bug-1245044
+# Node ID 276d1696e0980cd0b20e62cd5c1f1dcca6188150
+# Parent  3808b876d5397e4f2bf98b7b8aaf20482b2703ba
+Bug 1245044 - Move Restrictions class to restrictions package
+
+diff --git a/mobile/android/base/java/org/mozilla/gecko/Restrictions.java b/mobile/android/base/java/org/mozilla/gecko/restrictions/Restrictions.java
+rename from mobile/android/base/java/org/mozilla/gecko/Restrictions.java
+rename to mobile/android/base/java/org/mozilla/gecko/restrictions/Restrictions.java
+diff --git a/mobile/android/base/moz.build b/mobile/android/base/moz.build
+--- a/mobile/android/base/moz.build
++++ b/mobile/android/base/moz.build
+@@ -499,24 +499,24 @@ gbjar.sources += ['java/org/mozilla/geck
+     'prompts/PromptListItem.java',
+     'prompts/PromptService.java',
+     'prompts/TabInput.java',
+     'ReaderModeUtils.java',
+     'ReadingListHelper.java',
+     'RemoteClientsDialogFragment.java',
+     'RemoteTabsExpandableListAdapter.java',
+     'Restarter.java',
+-    'Restrictions.java',
+     'restrictions/DefaultConfiguration.java',
+     'restrictions/GuestProfileConfiguration.java',
+     'restrictions/Restrictable.java',
+     'restrictions/RestrictedProfileConfiguration.java',
+     'restrictions/RestrictionCache.java',
+     'restrictions/RestrictionConfiguration.java',
+     'restrictions/RestrictionProvider.java',
++    'restrictions/Restrictions.java',
+     'ScreenshotObserver.java',
+     'ServiceNotificationClient.java',
+     'SessionParser.java',
+     'SharedPreferencesHelper.java',
+     'SiteIdentity.java',
+     'SmsManager.java',
+     'SnackbarHelper.java',
+     'sqlite/ByteBufferInputStream.java',
