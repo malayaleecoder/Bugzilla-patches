@@ -1,0 +1,106 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1457638054 -19800
+#      Fri Mar 11 00:57:34 2016 +0530
+# Branch Bug1252368
+# Node ID 622bfd0a57364ac33067a412ecbbb2c9ae72703e
+# Parent  777cf115a4c89c62d4614d2f5314833b3305b95c
+Bug 1252368 - Move resource files in layout/style/ into res/ directory
+
+diff --git a/layout/style/jar.mn b/layout/style/jar.mn
+--- a/layout/style/jar.mn
++++ b/layout/style/jar.mn
+@@ -1,29 +1,29 @@
+ # This Source Code Form is subject to the terms of the Mozilla Public
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
+ toolkit.jar:
+-*  res/ua.css    (ua.css)
+-*  res/html.css    (html.css)
+-   res/quirk.css    (quirk.css)
+-   res/plaintext.css     (plaintext.css)
+-   res/viewsource.css    (viewsource.css)
+-   res/counterstyles.css (counterstyles.css)
+-   res/noscript.css (noscript.css)
+-   res/noframes.css (noframes.css)
+-*  res/forms.css    (forms.css)
+-   res/number-control.css    (number-control.css)
+-   res/arrow.gif        (arrow.gif)
+-   res/arrow-left.gif   (arrow-left.gif)
+-   res/arrow-right.gif  (arrow-right.gif)
+-   res/arrowd.gif       (arrowd.gif)
+-   res/arrowd-left.gif  (arrowd-left.gif)
+-   res/arrowd-right.gif (arrowd-right.gif)
++*  res/ua.css                                (res/ua.css)
++*  res/html.css                              (res/html.css)
++   res/quirk.css                             (res/quirk.css)
++   res/plaintext.css                         (res/plaintext.css)
++   res/viewsource.css                        (res/viewsource.css)
++   res/counterstyles.css                     (res/counterstyles.css)
++   res/noscript.css                          (res/noscript.css)
++   res/noframes.css                          (res/noframes.css)
++*  res/forms.css                             (res/forms.css)
++   res/number-control.css                    (res/number-control.css)
++   res/arrow.gif                             (res/arrow.gif)
++   res/arrow-left.gif                        (res/arrow-left.gif)
++   res/arrow-right.gif                       (res/arrow-right.gif)
++   res/arrowd.gif                            (res/arrowd.gif)
++   res/arrowd-left.gif                       (res/arrowd-left.gif)
++   res/arrowd-right.gif                      (res/arrowd-right.gif)
+    res/accessiblecaret-normal@1x.png         (res/accessiblecaret-normal@1x.png)
+    res/accessiblecaret-normal@1.5x.png       (res/accessiblecaret-normal@1.5x.png)
+    res/accessiblecaret-normal@2x.png         (res/accessiblecaret-normal@2x.png)
+    res/accessiblecaret-normal@2.25x.png      (res/accessiblecaret-normal@2.25x.png)
+    res/accessiblecaret-tilt-left@1x.png      (res/accessiblecaret-tilt-left@1x.png)
+    res/accessiblecaret-tilt-left@1.5x.png    (res/accessiblecaret-tilt-left@1.5x.png)
+    res/accessiblecaret-tilt-left@2x.png      (res/accessiblecaret-tilt-left@2x.png)
+    res/accessiblecaret-tilt-left@2.25x.png   (res/accessiblecaret-tilt-left@2.25x.png)
+diff --git a/layout/style/arrow-left.gif b/layout/style/res/arrow-left.gif
+rename from layout/style/arrow-left.gif
+rename to layout/style/res/arrow-left.gif
+diff --git a/layout/style/arrow-right.gif b/layout/style/res/arrow-right.gif
+rename from layout/style/arrow-right.gif
+rename to layout/style/res/arrow-right.gif
+diff --git a/layout/style/arrow.gif b/layout/style/res/arrow.gif
+rename from layout/style/arrow.gif
+rename to layout/style/res/arrow.gif
+diff --git a/layout/style/arrowd-left.gif b/layout/style/res/arrowd-left.gif
+rename from layout/style/arrowd-left.gif
+rename to layout/style/res/arrowd-left.gif
+diff --git a/layout/style/arrowd-right.gif b/layout/style/res/arrowd-right.gif
+rename from layout/style/arrowd-right.gif
+rename to layout/style/res/arrowd-right.gif
+diff --git a/layout/style/arrowd.gif b/layout/style/res/arrowd.gif
+rename from layout/style/arrowd.gif
+rename to layout/style/res/arrowd.gif
+diff --git a/layout/style/counterstyles.css b/layout/style/res/counterstyles.css
+rename from layout/style/counterstyles.css
+rename to layout/style/res/counterstyles.css
+diff --git a/layout/style/forms.css b/layout/style/res/forms.css
+rename from layout/style/forms.css
+rename to layout/style/res/forms.css
+diff --git a/layout/style/html.css b/layout/style/res/html.css
+rename from layout/style/html.css
+rename to layout/style/res/html.css
+diff --git a/layout/style/noframes.css b/layout/style/res/noframes.css
+rename from layout/style/noframes.css
+rename to layout/style/res/noframes.css
+diff --git a/layout/style/noscript.css b/layout/style/res/noscript.css
+rename from layout/style/noscript.css
+rename to layout/style/res/noscript.css
+diff --git a/layout/style/number-control.css b/layout/style/res/number-control.css
+rename from layout/style/number-control.css
+rename to layout/style/res/number-control.css
+diff --git a/layout/style/plaintext.css b/layout/style/res/plaintext.css
+rename from layout/style/plaintext.css
+rename to layout/style/res/plaintext.css
+diff --git a/layout/style/quirk.css b/layout/style/res/quirk.css
+rename from layout/style/quirk.css
+rename to layout/style/res/quirk.css
+diff --git a/layout/style/ua.css b/layout/style/res/ua.css
+rename from layout/style/ua.css
+rename to layout/style/res/ua.css
+diff --git a/layout/style/viewsource.css b/layout/style/res/viewsource.css
+rename from layout/style/viewsource.css
+rename to layout/style/res/viewsource.css
