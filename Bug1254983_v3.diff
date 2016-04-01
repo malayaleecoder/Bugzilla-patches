@@ -1,0 +1,96 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1457614001 -19800
+#      Thu Mar 10 18:16:41 2016 +0530
+# Node ID f6a493877f57364929a968cfe5ba0638d84d5fca
+# Parent  0d38e391b3a15ff78e4922071a067640990a44fc
+Bug 1254983 - Replace toast notification with snackbar when choosing to copy password from doorhanger
+
+diff --git a/mobile/android/base/java/org/mozilla/gecko/toolbar/SiteIdentityPopup.java b/mobile/android/base/java/org/mozilla/gecko/toolbar/SiteIdentityPopup.java
+--- a/mobile/android/base/java/org/mozilla/gecko/toolbar/SiteIdentityPopup.java
++++ b/mobile/android/base/java/org/mozilla/gecko/toolbar/SiteIdentityPopup.java
+@@ -6,39 +6,42 @@ package org.mozilla.gecko.toolbar;
+ 
+ import android.content.ClipData;
+ import android.content.ClipboardManager;
+ import android.content.res.Resources;
+ import android.graphics.Bitmap;
+ import android.graphics.drawable.BitmapDrawable;
+ import android.graphics.drawable.Drawable;
+ import android.support.v4.content.ContextCompat;
++import android.support.design.widget.Snackbar;
+ import android.widget.ImageView;
+ import android.widget.Toast;
+ import org.json.JSONException;
+ import org.json.JSONArray;
+ import org.mozilla.gecko.AboutPages;
+ import org.mozilla.gecko.AppConstants;
+ import org.mozilla.gecko.EventDispatcher;
+ import org.mozilla.gecko.R;
+ import org.mozilla.gecko.GeckoAppShell;
+ import org.mozilla.gecko.GeckoEvent;
+ import org.mozilla.gecko.SiteIdentity;
+ import org.mozilla.gecko.SiteIdentity.SecurityMode;
+ import org.mozilla.gecko.SiteIdentity.MixedMode;
+ import org.mozilla.gecko.SiteIdentity.TrackingMode;
++import org.mozilla.gecko.SnackbarHelper;
+ import org.mozilla.gecko.Tab;
+ import org.mozilla.gecko.Tabs;
+ import org.mozilla.gecko.util.GeckoEventListener;
+ import org.mozilla.gecko.util.ThreadUtils;
+ import org.mozilla.gecko.widget.AnchoredPopup;
+ import org.mozilla.gecko.widget.DoorHanger;
+ import org.mozilla.gecko.widget.DoorHanger.OnButtonClickListener;
+ import org.json.JSONObject;
+ 
++import android.app.Activity;
+ import android.content.Context;
+ import android.text.TextUtils;
+ import android.util.Log;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.widget.LinearLayout;
+ import android.widget.TextView;
+ import org.mozilla.gecko.widget.DoorhangerConfig;
+@@ -207,38 +210,39 @@ public class SiteIdentityPopup extends A
+         }
+ 
+         final JSONObject login = (JSONObject) logins.get(0);
+ 
+         // Create button click listener for copying a password to the clipboard.
+         final OnButtonClickListener buttonClickListener = new OnButtonClickListener() {
+             @Override
+             public void onButtonClick(JSONObject response, DoorHanger doorhanger) {
++                Activity activity = (Activity) mContext;
+                 try {
+                     final int buttonId = response.getInt("callback");
+                     if (buttonId == ButtonType.COPY.ordinal()) {
+                         final ClipboardManager manager = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                         String password;
+                         if (response.has("password")) {
+                             // Click listener being called from List Dialog.
+                             password = response.optString("password");
+                         } else {
+                             password = login.getString("password");
+                         }
+                         if (AppConstants.Versions.feature11Plus) {
+                             manager.setPrimaryClip(ClipData.newPlainText("password", password));
+                         } else {
+                             manager.setText(password);
+                         }
+-                        Toast.makeText(mContext, R.string.doorhanger_login_select_toast_copy, Toast.LENGTH_SHORT).show();
++                        SnackbarHelper.showSnackbar(activity, activity.getString(R.string.doorhanger_login_select_toast_copy), Snackbar.LENGTH_SHORT);
+                     }
+                     dismiss();
+                 } catch (JSONException e) {
+                     Log.e(LOGTAG, "Error handling Select login button click", e);
+-                    Toast.makeText(mContext, R.string.doorhanger_login_select_toast_copy_error, Toast.LENGTH_SHORT).show();
++                    SnackbarHelper.showSnackbar(activity, activity.getString(R.string.doorhanger_login_select_toast_copy_error), Snackbar.LENGTH_SHORT);
+                 }
+             }
+         };
+ 
+         final DoorhangerConfig config = new DoorhangerConfig(DoorHanger.Type.LOGIN, buttonClickListener);
+ 
+         // Set buttons.
+         config.setButton(mContext.getString(R.string.button_cancel), ButtonType.CANCEL.ordinal(), false);
