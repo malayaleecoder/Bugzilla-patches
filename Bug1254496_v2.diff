@@ -1,0 +1,263 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1457508242 -19800
+#      Wed Mar 09 12:54:02 2016 +0530
+# Branch Bug1254496
+# Node ID 4579aa57692c6681895943f4215df47a22eb3ab0
+# Parent  ddb3743580bdcc1c1c5c8176311e3fc34f1670ef
+Bug 1254496 - Remove gURLBar null-checks
+
+diff --git a/browser/base/content/browser-customization.js b/browser/base/content/browser-customization.js
+--- a/browser/base/content/browser-customization.js
++++ b/browser/base/content/browser-customization.js
+@@ -80,20 +80,18 @@ var CustomizationHandler = {
+     DownloadsButton.customizeDone();
+ 
+     // The url bar splitter state is dependent on whether stop/reload
+     // and the location bar are combined, so we need this ordering
+     CombinedStopReload.init();
+     UpdateUrlbarSearchSplitterState();
+ 
+     // Update the urlbar
+-    if (gURLBar) {
+-      URLBarSetURI();
+-      XULBrowserWindow.asyncUpdateUI();
+-    }
++    URLBarSetURI();
++    XULBrowserWindow.asyncUpdateUI();
+ 
+     // Re-enable parts of the UI we disabled during the dialog
+     let menubar = document.getElementById("main-menubar");
+     for (let childNode of menubar.childNodes)
+       childNode.setAttribute("disabled", false);
+     let cmd = document.getElementById("cmd_CustomizeToolbars");
+     cmd.removeAttribute("disabled");
+ 
+diff --git a/browser/base/content/browser-places.js b/browser/base/content/browser-places.js
+--- a/browser/base/content/browser-places.js
++++ b/browser/base/content/browser-places.js
+@@ -380,18 +380,17 @@ var PlacesCommandHook = {
+       PlacesUtils.transactionManager.doTransaction(txn);
+       itemId = txn.item.id;
+       // Set the character-set.
+       if (charset && !PrivateBrowsingUtils.isBrowserPrivate(aBrowser))
+         PlacesUtils.setCharsetForURI(uri, charset);
+     }
+ 
+     // Revert the contents of the location bar
+-    if (gURLBar)
+-      gURLBar.handleRevert();
++    gURLBar.handleRevert();
+ 
+     // If it was not requested to open directly in "edit" mode, we are done.
+     if (!aShowEditUI)
+       return;
+ 
+     // Try to dock the panel to:
+     // 1. the bookmarks menu button
+     // 2. the identity icon
+@@ -455,18 +454,17 @@ var PlacesCommandHook = {
+       info.guid = yield PlacesTransactions.NewBookmark(info).transact();
+ 
+       // Set the character-set
+       if (charset && !PrivateBrowsingUtils.isBrowserPrivate(aBrowser))
+          PlacesUtils.setCharsetForURI(makeURI(url.href), charset);
+     }
+ 
+     // Revert the contents of the location bar
+-    if (gURLBar)
+-      gURLBar.handleRevert();
++    gURLBar.handleRevert();
+ 
+     // If it was not requested to open directly in "edit" mode, we are done.
+     if (!aShowEditUI)
+       return;
+ 
+     let node = yield PlacesUIUtils.promiseNodeLikeFromFetchInfo(info);
+ 
+     // Try to dock the panel to:
+diff --git a/browser/base/content/browser.js b/browser/base/content/browser.js
+--- a/browser/base/content/browser.js
++++ b/browser/base/content/browser.js
+@@ -403,20 +403,18 @@ const gSessionHistoryObserver = {
+     var backCommand = document.getElementById("Browser:Back");
+     backCommand.setAttribute("disabled", "true");
+     var fwdCommand = document.getElementById("Browser:Forward");
+     fwdCommand.setAttribute("disabled", "true");
+ 
+     // Hide session restore button on about:home
+     window.messageManager.broadcastAsyncMessage("Browser:HideSessionRestoreButton");
+ 
+-    if (gURLBar) {
+-      // Clear undo history of the URL bar
+-      gURLBar.editor.transactionManager.clear()
+-    }
++    // Clear undo history of the URL bar
++    gURLBar.editor.transactionManager.clear()
+   }
+ };
+ 
+ /**
+  * Given a starting docshell and a URI to look up, find the docshell the URI
+  * is loaded in.
+  * @param   aDocument
+  *          A document to find instead of using just a URI - this is more specific.
+@@ -462,30 +460,28 @@ var gPopupBlockerObserver = {
+     if (aEvent.originalTarget != gBrowser.selectedBrowser)
+       return;
+ 
+     if (!this._reportButton && gURLBar)
+       this._reportButton = document.getElementById("page-report-button");
+ 
+     if (!gBrowser.selectedBrowser.blockedPopups) {
+       // Hide the icon in the location bar (if the location bar exists)
+-      if (gURLBar)
+-        this._reportButton.hidden = true;
++      this._reportButton.hidden = true;
+ 
+       // Hide the notification box (if it's visible).
+       let notificationBox = gBrowser.getNotificationBox();
+       let notification = notificationBox.getNotificationWithValue("popup-blocked");
+       if (notification) {
+         notificationBox.removeNotification(notification, false);
+       }
+       return;
+     }
+ 
+-    if (gURLBar)
+-      this._reportButton.hidden = false;
++    this._reportButton.hidden = false;
+ 
+     // Only show the notification again if we've not already shown it. Since
+     // notifications are per-browser, we don't need to worry about re-adding
+     // it.
+     if (!gBrowser.selectedBrowser.blockedPopups.reported) {
+       if (gPrefService.getBoolPref("privacy.popups.showBrowserMessage")) {
+         var brandBundle = document.getElementById("bundle_brand");
+         var brandShortName = brandBundle.getString("brandShortName");
+@@ -982,20 +978,18 @@ var gBrowserInit = {
+ 
+       if (width < TARGET_WIDTH && height < TARGET_HEIGHT) {
+         document.documentElement.setAttribute("sizemode", "maximized");
+       }
+     }
+ 
+     if (!window.toolbar.visible) {
+       // adjust browser UI for popups
+-      if (gURLBar) {
+-        gURLBar.setAttribute("readonly", "true");
+-        gURLBar.setAttribute("enablehistory", "false");
+-      }
++      gURLBar.setAttribute("readonly", "true");
++      gURLBar.setAttribute("enablehistory", "false");
+       goSetCommandEnabled("cmd_newNavigatorTab", false);
+     }
+ 
+     // Misc. inits.
+     TabletModeUpdater.init();
+     CombinedStopReload.init();
+     gPrivateBrowsingUI.init();
+     TabsInTitlebar.init();
+@@ -1831,24 +1825,22 @@ function loadOneOrMoreURIs(aURIString)
+   try {
+     gBrowser.loadTabs(aURIString.split("|"), false, true);
+   }
+   catch (e) {
+   }
+ }
+ 
+ function focusAndSelectUrlBar() {
+-  if (gURLBar) {
+-    if (window.fullScreen)
+-      FullScreen.showNavToolbox();
+-
+-    gURLBar.select();
+-    if (document.activeElement == gURLBar.inputField)
+-      return true;
+-  }
++  if (window.fullScreen)
++    FullScreen.showNavToolbox();
++
++  gURLBar.select();
++  if (document.activeElement == gURLBar.inputField)
++    return true;
+   return false;
+ }
+ 
+ function openLocation() {
+   if (focusAndSelectUrlBar())
+     return;
+ 
+   if (window.location.href != getBrowserURL()) {
+@@ -4325,24 +4317,22 @@ var XULBrowserWindow = {
+       if ((location == "about:blank" && checkEmptyPageOrigin()) ||
+           location == "") {  // Second condition is for new tabs, otherwise
+                              // reload function is enabled until tab is refreshed.
+         this.reloadCommand.setAttribute("disabled", "true");
+       } else {
+         this.reloadCommand.removeAttribute("disabled");
+       }
+ 
+-      if (gURLBar) {
+-        URLBarSetURI(aLocationURI);
+-
+-        BookmarkingUI.onLocationChange();
+-        SocialUI.updateState();
+-        UITour.onLocationChange(location);
+-        gTabletModePageCounter.inc();
+-      }
++      URLBarSetURI(aLocationURI);
++
++      BookmarkingUI.onLocationChange();
++      SocialUI.updateState();
++      UITour.onLocationChange(location);
++      gTabletModePageCounter.inc();
+ 
+       // Utility functions for disabling find
+       var shouldDisableFind = function shouldDisableFind(aDocument) {
+         let docElt = aDocument.documentElement;
+         return docElt && docElt.getAttribute("disablefastfind") == "true";
+       }
+ 
+       var disableFindCommands = function disableFindCommands(aDisable) {
+@@ -7273,29 +7263,27 @@ var gPrivateBrowsingUI = {
+             newWindow.label = newPrivateWindow.label;
+             newWindow.accessKey = newPrivateWindow.accessKey;
+             newWindow.command = newPrivateWindow.command;
+           }
+         });
+       }
+     }
+ 
+-    if (gURLBar) {
+-      let value = gURLBar.getAttribute("autocompletesearchparam") || "";
+-      if (!PrivateBrowsingUtils.permanentPrivateBrowsing &&
+-          !value.includes("disable-private-actions")) {
+-        // Disable switch to tab autocompletion for private windows.
+-        // We leave it enabled for permanent private browsing mode though.
+-        value += " disable-private-actions";
+-      }
+-      if (!value.includes("private-window")) {
+-        value += " private-window";
+-      }
+-      gURLBar.setAttribute("autocompletesearchparam", value);
+-    }
++    let value = gURLBar.getAttribute("autocompletesearchparam") || "";
++    if (!PrivateBrowsingUtils.permanentPrivateBrowsing &&
++        !value.includes("disable-private-actions")) {
++      // Disable switch to tab autocompletion for private windows.
++      // We leave it enabled for permanent private browsing mode though.
++      value += " disable-private-actions";
++    }
++    if (!value.includes("private-window")) {
++      value += " private-window";
++    }
++    gURLBar.setAttribute("autocompletesearchparam", value);
+   }
+ };
+ 
+ var gRemoteTabsUI = {
+   init: function() {
+     if (window.location.href != getBrowserURL() &&
+         // Also check hidden window for the Mac no-window case
+         window.location.href != "chrome://browser/content/hiddenWindow.xul") {
