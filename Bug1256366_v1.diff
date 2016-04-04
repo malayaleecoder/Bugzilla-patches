@@ -1,0 +1,202 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1459751300 -19800
+#      Mon Apr 04 11:58:20 2016 +0530
+# Branch BUG1256366
+# Node ID b9f1d4a5dd5da68f1e3fc29eff4ce2e940d3b59f
+# Parent  71c05edd5e050d41ff59b42a16dd9ee96930e98e
+ Bug 1256366 - Remove linear and exponential stats collection from histogram.cc
+
+diff --git a/ipc/chromium/src/base/histogram.cc b/ipc/chromium/src/base/histogram.cc
+--- a/ipc/chromium/src/base/histogram.cc
++++ b/ipc/chromium/src/base/histogram.cc
+@@ -562,17 +562,17 @@ const std::string Histogram::GetAsciiBuc
+     StringAppendF(&result, "%#x", ranges(i));
+   else
+     StringAppendF(&result, "%d", ranges(i));
+   return result;
+ }
+ 
+ // Update histogram data with new sample.
+ void Histogram::Accumulate(Sample value, Count count, size_t index) {
+-  sample_.AccumulateWithLinearStats(value, count, index);
++  sample_.Accumulate(value, count, index);
+ }
+ 
+ void Histogram::SetBucketRange(size_t i, Sample value) {
+   DCHECK_GT(bucket_count_, i);
+   ranges_[i] = value;
+ }
+ 
+ bool Histogram::ValidateBucketRanges() const {
+@@ -715,19 +715,16 @@ void Histogram::WriteAsciiBucketGraph(do
+ 
+ //------------------------------------------------------------------------------
+ // Methods for the Histogram::SampleSet class
+ //------------------------------------------------------------------------------
+ 
+ Histogram::SampleSet::SampleSet()
+     : counts_(),
+       sum_(0),
+-      sum_squares_(0),
+-      log_sum_(0),
+-      log_sum_squares_(0),
+       redundant_count_(0),
+       mutex_("Histogram::SampleSet::SampleSet") {
+ }
+ 
+ Histogram::SampleSet::~SampleSet() {
+ }
+ 
+ void Histogram::SampleSet::Resize(const Histogram& histogram) {
+@@ -742,22 +739,21 @@ void Histogram::SampleSet::Accumulate(co
+   counts_[index] += count;
+   redundant_count_ += count;
+   sum_ += static_cast<int64_t>(count) * value;
+   DCHECK_GE(counts_[index], 0);
+   DCHECK_GE(sum_, 0);
+   DCHECK_GE(redundant_count_, 0);
+ }
+ 
+-void Histogram::SampleSet::AccumulateWithLinearStats(Sample value,
+-                                                     Count count,
+-                                                     size_t index) {
++void Histogram::SampleSet::Accumulate(Sample value,
++                                      Count count,
++                                      size_t index) {
+   OffTheBooksMutexAutoLock locker(mutex_);
+   Accumulate(locker, value, count, index);
+-  sum_squares_ += static_cast<int64_t>(count) * value * value;
+ }
+ 
+ Count Histogram::SampleSet::TotalCount(const OffTheBooksMutexAutoLock& ev)
+                                                                        const {
+   Count total = 0;
+   for (Counts::const_iterator it = counts_.begin();
+        it != counts_.end();
+        ++it) {
+@@ -765,19 +761,16 @@ Count Histogram::SampleSet::TotalCount(c
+   }
+   return total;
+ }
+ 
+ void Histogram::SampleSet::Add(const SampleSet& other) {
+   OffTheBooksMutexAutoLock locker(mutex_);
+   DCHECK_EQ(counts_.size(), other.counts_.size());
+   sum_ += other.sum_;
+-  sum_squares_ += other.sum_squares_;
+-  log_sum_ += other.log_sum_;
+-  log_sum_squares_ += other.log_sum_squares_;
+   redundant_count_ += other.redundant_count_;
+   for (size_t index = 0; index < counts_.size(); ++index)
+     counts_[index] += other.counts_[index];
+ }
+ 
+ bool Histogram::SampleSet::Serialize(Pickle* pickle) const {
+   OffTheBooksMutexAutoLock locker(mutex_);
+   pickle->WriteInt64(sum_);
+@@ -863,17 +856,17 @@ Histogram* LinearHistogram::FactoryTimeG
+                     bucket_count, flags);
+ }
+ 
+ Histogram::ClassType LinearHistogram::histogram_type() const {
+   return LINEAR_HISTOGRAM;
+ }
+ 
+ void LinearHistogram::Accumulate(Sample value, Count count, size_t index) {
+-  sample_.AccumulateWithLinearStats(value, count, index);
++  sample_.Accumulate(value, count, index);
+ }
+ 
+ void LinearHistogram::SetRangeDescriptions(
+     const DescriptionPair descriptions[]) {
+   for (int i =0; descriptions[i].description; ++i) {
+     bucket_description_[descriptions[i].sample] = descriptions[i].description;
+   }
+ }
+diff --git a/ipc/chromium/src/base/histogram.h b/ipc/chromium/src/base/histogram.h
+--- a/ipc/chromium/src/base/histogram.h
++++ b/ipc/chromium/src/base/histogram.h
+@@ -348,17 +348,17 @@ class Histogram {
+     //
+     // The caller must not already hold |this.mutex_|, otherwise we
+     // will end up deadlocking.
+ 
+     // Adjust size of counts_ for use with given histogram.
+     void Resize(const Histogram& histogram);
+ 
+     // Accessor for histogram to make routine additions.
+-    void AccumulateWithLinearStats(Sample value, Count count, size_t index);
++    void Accumulate(Sample value, Count count, size_t index);
+ 
+     // Arithmetic manipulation of corresponding elements of the set.
+     void Add(const SampleSet& other);
+ 
+     bool Serialize(Pickle* pickle) const;
+     bool Deserialize(void** iter, const Pickle& pickle);
+ 
+     size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf);
+@@ -370,63 +370,44 @@ class Histogram {
+ 
+     Count counts(const OffTheBooksMutexAutoLock& ev, size_t i) const {
+        return counts_[i];
+     }
+     Count TotalCount(const OffTheBooksMutexAutoLock& ev) const;
+     int64_t sum(const OffTheBooksMutexAutoLock& ev) const {
+        return sum_;
+     }
+-    uint64_t sum_squares(const OffTheBooksMutexAutoLock& ev) const {
+-       return sum_squares_;
+-    }
+-    double log_sum(const OffTheBooksMutexAutoLock& ev) const {
+-       return log_sum_;
+-    }
+-    double log_sum_squares(const OffTheBooksMutexAutoLock& ev) const {
+-       return log_sum_squares_;
+-    }
+     int64_t redundant_count(const OffTheBooksMutexAutoLock& ev) const {
+        return redundant_count_;
+     }
+     size_t size(const OffTheBooksMutexAutoLock& ev) const {
+        return counts_.size();
+     }
+ 
+     // An assignment operator.  The presence of mozilla::OffTheBooksMutex
+     // in this class causes the default assignment operator to be deleted.
+     const SampleSet& operator=(const SampleSet& other) {
+        counts_          = other.counts_;
+        sum_             = other.sum_;
+-       sum_squares_     = other.sum_squares_;
+-       log_sum_         = other.log_sum_;
+-       log_sum_squares_ = other.log_sum_squares_;
+        redundant_count_ = other.redundant_count_;
+        return *this;
+     }
+ 
+    private:
+     void Accumulate(const OffTheBooksMutexAutoLock& ev,
+                     Sample value, Count count, size_t index);
+ 
+    protected:
+     // Actual histogram data is stored in buckets, showing the count of values
+     // that fit into each bucket.
+     Counts counts_;
+ 
+     // Save simple stats locally.  Note that this MIGHT get done in base class
+     // without shared memory at some point.
+     int64_t sum_;         // sum of samples.
+-    uint64_t sum_squares_; // sum of squares of samples.
+-
+-    // These fields may or may not be updated at the discretion of the
+-    // histogram.  We use the natural log and compute ln(sample+1) so that
+-    // zeros are handled sanely.
+-    double log_sum_;      // sum of logs of samples.
+-    double log_sum_squares_; // sum of squares of logs of samples
+ 
+     // To help identify memory corruption, we reduntantly save the number of
+     // samples we've accumulated into all of our buckets.  We can compare this
+     // count to the sum of the counts in all buckets, and detect problems.  Note
+     // that due to races in histogram accumulation (if a histogram is indeed
+     // updated on several threads simultaneously), the tallies might mismatch,
+     // and also the snapshotting code may asynchronously get a mismatch (though
+     // generally either race based mismatch cause is VERY rare).
