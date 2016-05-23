@@ -1,0 +1,155 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1464039022 -19800
+#      Tue May 24 03:00:22 2016 +0530
+# Branch Bug763610
+# Node ID 72dd0932973e8565133989c6d1da018b2b7c7fab
+# Parent  4bba23d07af87ae137f0395a0a3cb98caff7c626
+Bug 763610 - test_name_extension should probably go away
+
+diff --git a/testing/talos/talos/config.py b/testing/talos/talos/config.py
+--- a/testing/talos/talos/config.py
++++ b/testing/talos/talos/config.py
+@@ -20,17 +20,16 @@ DEFAULTS = dict(
+     # args to pass to browser
+     extra_args='',
+     buildid='testbuildid',
+     init_url='getInfo.html',
+     env={'NO_EM_RESTART': '1'},
+     # base data for all tests
+     basetest=dict(
+         cycles=1,
+-        test_name_extension='',
+         profile_path='${talos}/base_profile',
+         responsiveness=False,
+         e10s=False,
+         sps_profile=False,
+         sps_profile_interval=1,
+         sps_profile_entries=100000,
+         resolution=1,
+         rss=False,
+@@ -345,20 +344,16 @@ def build_manifest(config, manifestName)
+ 
+     # return new manifest
+     return newManifestName
+ 
+ 
+ def get_test(config, global_overrides, counters, test_instance):
+     mozAfterPaint = getattr(test_instance, 'tpmozafterpaint', None)
+ 
+-    # add test_name_extension to config
+-    if mozAfterPaint:
+-        test_instance.test_name_extension = '_paint'
+-
+     test_instance.update(**global_overrides)
+ 
+     # update original value of mozAfterPaint, this could be 'false',
+     # so check for None
+     if mozAfterPaint is not None:
+         test_instance.tpmozafterpaint = mozAfterPaint
+ 
+     # fix up url
+@@ -411,17 +406,16 @@ def get_browser_config(config):
+                 'child_process': 'plugin-container',
+                 'develop': False,
+                 'e10s': False,
+                 'process': '',
+                 'framework': 'talos',
+                 'repository': None,
+                 'sourcestamp': None,
+                 'symbols_path': None,
+-                'test_name_extension': '',
+                 'test_timeout': 1200,
+                 'xperf_path': None,
+                 'error_filename': None,
+                 }
+     browser_config = dict(title=config['title'])
+     browser_config.update(dict([(i, config[i]) for i in required]))
+     browser_config.update(dict([(i, config.get(i, j))
+                           for i, j in optional.items()]))
+diff --git a/testing/talos/talos/results.py b/testing/talos/talos/results.py
+--- a/testing/talos/talos/results.py
++++ b/testing/talos/talos/results.py
+@@ -95,19 +95,16 @@ class TestResults(object):
+         self.global_counters = global_counters or {}
+         self.all_counter_results = []
+         self.framework = framework
+         self.using_xperf = False
+ 
+     def name(self):
+         return self.test_config['name']
+ 
+-    def extension(self):
+-        return self.test_config['test_name_extension']
+-
+     def mainthread(self):
+         return self.test_config['mainthread']
+ 
+     def add(self, results, counter_results=None):
+         """
+         accumulate one cycle of results
+         - results : TalosResults instance or path to browser log
+         - counter_results : counters accumulated for this cycle
+diff --git a/testing/talos/talos/test.py b/testing/talos/talos/test.py
+--- a/testing/talos/talos/test.py
++++ b/testing/talos/talos/test.py
+@@ -99,17 +99,16 @@ class TsBase(Test):
+         'sps_profile_entries',
+         'sps_profile_startup',
+         'preferences',
+         'xperf_counters',
+         'xperf_providers',
+         'xperf_user_providers',
+         'xperf_stackwalk',
+         'tpmozafterpaint',
+-        'test_name_extension',
+         'extensions',
+         'filters',
+         'setup',
+         'cleanup',
+         'reinstall',     # A list of files from the profile directory that
+                          # should be copied to the temporary profile prior to
+                          # running each cycle, to avoid one cycle overwriting
+                          # the data used by the next another cycle (may be used
+@@ -231,18 +230,17 @@ class PageloaderTest(Test):
+     keys = ['tpmanifest', 'tpcycles', 'tppagecycles', 'tprender', 'tpchrome',
+             'tpmozafterpaint', 'tploadnocache', 'rss', 'mainthread',
+             'resolution', 'cycles', 'sps_profile', 'sps_profile_interval',
+             'sps_profile_entries', 'tptimeout', 'win_counters', 'w7_counters',
+             'linux_counters', 'mac_counters', 'tpscrolltest', 'xperf_counters',
+             'timeout', 'shutdown', 'responsiveness', 'profile_path',
+             'xperf_providers', 'xperf_user_providers', 'xperf_stackwalk',
+             'filters', 'preferences', 'extensions', 'setup', 'cleanup',
+-            'test_name_extension', 'lower_is_better', 'alert_threshold',
+-            'unit']
++            'lower_is_better', 'alert_threshold', 'unit']
+ 
+ 
+ @register_test()
+ class tabpaint(PageloaderTest):
+     """
+     Tests the amount of time it takes to open new tabs, triggered from
+     both the parent process and the content process.
+     """
+diff --git a/testing/talos/tests/test_talosconfig.py b/testing/talos/tests/test_talosconfig.py
+--- a/testing/talos/tests/test_talosconfig.py
++++ b/testing/talos/tests/test_talosconfig.py
+@@ -2,17 +2,17 @@ from talos import talosconfig
+ from talos.configuration import YAML
+ import unittest
+ import json
+ 
+ 
+ #globals
+ ffox_path = 'test/path/to/firefox'
+ command_args = [ffox_path, '-profile', 'pathtoprofile', '-tp', 'pathtotpmanifest', '-tpchrome', '-tpmozafterpaint', '-tpnoisy', '-rss', '-tpcycles', '1', '-tppagecycles', '1']
+-browser_config = {'deviceroot': '', 'dirs': {}, 'test_name_extension': '_paint', 'repository': 'http://hg.mozilla.org/releases/mozilla-release', 'buildid': '20131205075310', 'results_log': 'pathtoresults_log', 'symbols_path': None, 'bcontroller_config': 'pathtobcontroller', 'host': '', 'browser_name': 'Firefox', 'sourcestamp': '39faf812aaec', 'remote': False, 'child_process': 'plugin-container', 'branch_name': '', 'browser_version': '26.0', 'extra_args': '', 'develop': True, 'preferences': {'browser.display.overlaynavbuttons': False, 'extensions.getAddons.get.url': 'http://127.0.0.1/extensions-dummy/repositoryGetURL', 'dom.max_chrome_script_run_time': 0, 'network.proxy.type': 1, 'extensions.update.background.url': 'http://127.0.0.1/extensions-dummy/updateBackgroundURL', 'network.proxy.http': 'localhost', 'plugins.update.url': 'http://127.0.0.1/plugins-dummy/updateCheckURL', 'dom.max_script_run_time': 0, 'extensions.update.enabled': False, 'browser.safebrowsing.keyURL': 'http://127.0.0.1/safebrowsing-dummy/newkey', 'media.navigator.permission.disabled': True, 'app.update.enabled': False, 'extensions.blocklist.url': 'http://127.0.0.1/extensions-dummy/blocklistURL', 'browser.EULA.override': True, 'extensions.checkCompatibility': False, 'talos.logfile': 'pathtofile', 'browser.safebrowsing.gethashURL': 'http://127.0.0.1/safebrowsing-dummy/gethash', 'extensions.hotfix.url': 'http://127.0.0.1/extensions-dummy/hotfixURL', 'dom.disable_window_move_resize': True, 'network.proxy.http_port': 80, 'browser.dom.window.dump.enabled': True, 'extensions.update.url': 'http://127.0.0.1/extensions-dummy/updateURL', 'browser.chrome.dynamictoolbar': False,  'browser.link.open_newwindow': 2, 'extensions.getAddons.search.url': 'http://127.0.0.1/extensions-dummy/repositorySearchURL', 'browser.cache.disk.smart_size.first_run': False, 'security.turn_off_all_security_so_that_viruses_can_take_over_this_computer': True, 'dom.disable_open_during_load': False, 'extensions.getAddons.search.browseURL': 'http://127.0.0.1/extensions-dummy/repositoryBrowseURL', 'browser.cache.disk.smart_size.enabled': False, 'extensions.getAddons.getWithPerformance.url': 'http://127.0.0.1/extensions-dummy/repositoryGetWithPerformanceURL', 'hangmonitor.timeout': 0, 'extensions.getAddons.maxResults': 0, 'dom.send_after_paint_to_content': True, 'security.fileuri.strict_origin_policy': False, 'media.capturestream_hints.enabled': True, 'extensions.update.notifyUser': False, 'extensions.blocklist.enabled': False, 'browser.bookmarks.max_backups': 0, 'browser.shell.checkDefaultBrowser': False, 'media.peerconnection.enabled': True, 'dom.disable_window_flip': True, 'security.enable_java': False, 'browser.warnOnQuit': False, 'media.navigator.enabled': True, 'browser.safebrowsing.updateURL': 'http://127.0.0.1/safebrowsing-dummy/update', 'dom.allow_scripts_to_close_windows': True, 'extensions.webservice.discoverURL': 'http://127.0.0.1/extensions-dummy/discoveryURL'}, 'test_timeout': 1200, 'title': 'qm-pxp01', 'error_filename': 'pathtoerrorfile', 'webserver': 'localhost:15707', 'browser_path':ffox_path, 'port': 20701, 'browser_log': 'browser_output.txt', 'process': 'firefox.exe', 'xperf_path': 'C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe', 'extensions': ['pathtopageloader'], 'fennecIDs': '', 'env': {'NO_EM_RESTART': '1'}, 'init_url': 'http://localhost:15707/getInfo.html', 'browser_wait': 5}
++browser_config = {'deviceroot': '', 'dirs': {}, 'repository': 'http://hg.mozilla.org/releases/mozilla-release', 'buildid': '20131205075310', 'results_log': 'pathtoresults_log', 'symbols_path': None, 'bcontroller_config': 'pathtobcontroller', 'host': '', 'browser_name': 'Firefox', 'sourcestamp': '39faf812aaec', 'remote': False, 'child_process': 'plugin-container', 'branch_name': '', 'browser_version': '26.0', 'extra_args': '', 'develop': True, 'preferences': {'browser.display.overlaynavbuttons': False, 'extensions.getAddons.get.url': 'http://127.0.0.1/extensions-dummy/repositoryGetURL', 'dom.max_chrome_script_run_time': 0, 'network.proxy.type': 1, 'extensions.update.background.url': 'http://127.0.0.1/extensions-dummy/updateBackgroundURL', 'network.proxy.http': 'localhost', 'plugins.update.url': 'http://127.0.0.1/plugins-dummy/updateCheckURL', 'dom.max_script_run_time': 0, 'extensions.update.enabled': False, 'browser.safebrowsing.keyURL': 'http://127.0.0.1/safebrowsing-dummy/newkey', 'media.navigator.permission.disabled': True, 'app.update.enabled': False, 'extensions.blocklist.url': 'http://127.0.0.1/extensions-dummy/blocklistURL', 'browser.EULA.override': True, 'extensions.checkCompatibility': False, 'talos.logfile': 'pathtofile', 'browser.safebrowsing.gethashURL': 'http://127.0.0.1/safebrowsing-dummy/gethash', 'extensions.hotfix.url': 'http://127.0.0.1/extensions-dummy/hotfixURL', 'dom.disable_window_move_resize': True, 'network.proxy.http_port': 80, 'browser.dom.window.dump.enabled': True, 'extensions.update.url': 'http://127.0.0.1/extensions-dummy/updateURL', 'browser.chrome.dynamictoolbar': False,  'browser.link.open_newwindow': 2, 'extensions.getAddons.search.url': 'http://127.0.0.1/extensions-dummy/repositorySearchURL', 'browser.cache.disk.smart_size.first_run': False, 'security.turn_off_all_security_so_that_viruses_can_take_over_this_computer': True, 'dom.disable_open_during_load': False, 'extensions.getAddons.search.browseURL': 'http://127.0.0.1/extensions-dummy/repositoryBrowseURL', 'browser.cache.disk.smart_size.enabled': False, 'extensions.getAddons.getWithPerformance.url': 'http://127.0.0.1/extensions-dummy/repositoryGetWithPerformanceURL', 'hangmonitor.timeout': 0, 'extensions.getAddons.maxResults': 0, 'dom.send_after_paint_to_content': True, 'security.fileuri.strict_origin_policy': False, 'media.capturestream_hints.enabled': True, 'extensions.update.notifyUser': False, 'extensions.blocklist.enabled': False, 'browser.bookmarks.max_backups': 0, 'browser.shell.checkDefaultBrowser': False, 'media.peerconnection.enabled': True, 'dom.disable_window_flip': True, 'security.enable_java': False, 'browser.warnOnQuit': False, 'media.navigator.enabled': True, 'browser.safebrowsing.updateURL': 'http://127.0.0.1/safebrowsing-dummy/update', 'dom.allow_scripts_to_close_windows': True, 'extensions.webservice.discoverURL': 'http://127.0.0.1/extensions-dummy/discoveryURL'}, 'test_timeout': 1200, 'title': 'qm-pxp01', 'error_filename': 'pathtoerrorfile', 'webserver': 'localhost:15707', 'browser_path':ffox_path, 'port': 20701, 'browser_log': 'browser_output.txt', 'process': 'firefox.exe', 'xperf_path': 'C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe', 'extensions': ['pathtopageloader'], 'fennecIDs': '', 'env': {'NO_EM_RESTART': '1'}, 'init_url': 'http://localhost:15707/getInfo.html', 'browser_wait': 5}
+ test_config = {'remote_counters': [], 'filters': [['ignore_first', [5]], ['median', []]], 'xperf_user_providers': ['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'], 'tpcycles': 1, 'browser_log': 'browser_output.txt', 'shutdown': False, 'fennecIDs': False, 'responsiveness': False, 'tpmozafterpaint': True, 'cleanup': 'pathtofile', 'tprender': False, 'xperf_counters': ['main_startup_fileio', 'main_startup_netio', 'main_normal_fileio', 'main_normal_netio', 'nonmain_startup_fileio', 'nonmain_normal_fileio', 'nonmain_normal_netio', 'mainthread_readcount', 'mainthread_readbytes', 'mainthread_writecount', 'mainthread_writebytes'], 'mac_counters': [], 'tpnoisy': True, 'tppagecycles': 1, 'tploadaboutblank': False, 'xperf_providers': ['PROC_THREAD', 'LOADER', 'HARD_FAULTS', 'FILENAME', 'FILE_IO', 'FILE_IO_INIT'], 'rss': True, 'profile_path': 'path', 'name': 'tp5n', 'url': '-tp pathtotp5n.manifest -tpchrome -tpmozafterpaint -tpnoisy -rss -tpcycles 1 -tppagecycles 1', 'setup': 'pathtosetup', 'linux_counters': [], 'tpmanifest': 'pathtotp5n.manifest', 'w7_counters': [], 'timeout': 1800, 'xperf_stackwalk': ['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'], 'win_counters': [], 'cycles': 1, 'resolution': 20, 'tpchrome': True}
+ 
+ 
+ class TestWriteConfig(unittest.TestCase):
+     def test_writeConfigFile(self):
+         obj = dict(some=123, thing='456', other=789)
+ 
+         self.assertEquals(
