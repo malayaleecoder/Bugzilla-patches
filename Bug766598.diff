@@ -1,9 +1,9 @@
 # HG changeset patch
 # User malayaleecoder <malayaleecoder@gmail.com>
-# Date 1464121948 -19800
-#      Wed May 25 02:02:28 2016 +0530
+# Date 1464119905 -19800
+#      Wed May 25 01:28:25 2016 +0530
 # Branch Bug766598
-# Node ID 076299a8b772e1e864000a5298526cc2075f0eae
+# Node ID bb31cff71614934f85cd425cc51c9da9014535d3
 # Parent  1a75ace63d2007f9ce36a39b436ee5527f0c5b5e
 Bug 766598 - move responsiveness metric to filter.py
 
@@ -21,10 +21,10 @@ diff --git a/testing/talos/talos/filter.py b/testing/talos/talos/filter.py
      return reference[name] / geometric_mean(series)
 +
 +
-+@classmethod
-+@define_filter
-+def responsiveness_Metric(cls, val_list):
-+    return sum([float(x)*float(x) / 1000000.0 for x in val_list])
++    @classmethod
++    @define_filter
++    def responsiveness_Metric(cls, val_list):
++        return sum([float(x)*float(x) / 1000000.0 for x in val_list])
 diff --git a/testing/talos/talos/output.py b/testing/talos/talos/output.py
 --- a/testing/talos/talos/output.py
 +++ b/testing/talos/talos/output.py
