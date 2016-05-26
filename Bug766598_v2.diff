@@ -1,0 +1,88 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1464209835 -19800
+#      Thu May 26 02:27:15 2016 +0530
+# Branch Bug766598
+# Node ID a1ab244f3ecf3f1f2dc0fdb2acad2248bcb486fb
+# Parent  1a75ace63d2007f9ce36a39b436ee5527f0c5b5e
+Bug 766598 - move responsiveness metric to filter.py. r=jmaher
+
+diff --git a/testing/talos/talos/filter.py b/testing/talos/talos/filter.py
+--- a/testing/talos/talos/filter.py
++++ b/testing/talos/talos/filter.py
+@@ -181,8 +181,13 @@ def v8_subtest(series, name):
+                  'NavierStokes': 1484000.,
+                  'RayTrace': 739989.,
+                  'RegExp': 910985.,
+                  'Richards': 35302.,
+                  'Splay': 81491.
+                  }
+ 
+     return reference[name] / geometric_mean(series)
++
++
++@define_filter
++def responsiveness_Metric(cls, val_list):
++    return sum([float(x)*float(x) / 1000000.0 for x in val_list])
+diff --git a/testing/talos/talos/output.py b/testing/talos/talos/output.py
+--- a/testing/talos/talos/output.py
++++ b/testing/talos/talos/output.py
+@@ -89,20 +89,16 @@ class Output(object):
+     @classmethod
+     def isMemoryMetric(cls, resultName):
+         """returns if the result is a memory metric"""
+         memory_metric = ['memset', 'rss', 'pbytes', 'xres', 'modlistbytes',
+                          'main_rss', 'content_rss']  # measured in bytes
+         return bool([i for i in memory_metric if i in resultName])
+ 
+     @classmethod
+-    def responsiveness_Metric(cls, val_list):
+-        return sum([float(x)*float(x) / 1000000.0 for x in val_list])
+-
+-    @classmethod
+     def v8_Metric(cls, val_list):
+         results = [i for i, j in val_list]
+         score = 100 * filter.geometric_mean(results)
+         return score
+ 
+     @classmethod
+     def JS_Metric(cls, val_list):
+         """v8 benchmark score"""
+@@ -140,17 +136,17 @@ class PerfherderOutput(Output):
+                       sort_keys=True)
+ 
+     def post(self, results, server, path, scheme, tbpl_output):
+         """conform to current code- not needed for perfherder"""
+         pass
+ 
+     def construct_results(self, vals, testname):
+         if 'responsiveness' in testname:
+-            return self.responsiveness_Metric([val for (val, page) in vals])
++            return filter.responsiveness_Metric([val for (val, page) in vals])
+         elif testname.startswith('v8_7'):
+             return self.v8_Metric(vals)
+         elif testname.startswith('kraken'):
+             return self.JS_Metric(vals)
+         elif testname.startswith('tcanvasmark'):
+             return self.CanvasMark_Metric(vals)
+         elif len(vals) > 1:
+             return filter.geometric_mean([i for i, j in vals])
+@@ -253,17 +249,17 @@ class PerfherderOutput(Output):
+                     if 'mainthreadio' in name:
+                         continue
+ 
+                     # responsiveness has it's own metric, not the mean
+                     # TODO: consider doing this for all counters
+                     if 'responsiveness' is name:
+                         subtest = {
+                             'name': name,
+-                            'value': self.responsiveness_Metric(vals)
++                            'value': filter.responsiveness_Metric(vals)
+                         }
+                         counter_subtests.append(subtest)
+                         continue
+ 
+                     subtest = {
+                         'name': name,
+                         'value': 0.0,
+                     }
