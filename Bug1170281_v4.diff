@@ -1,0 +1,327 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1465010474 -19800
+#      Sat Jun 04 08:51:14 2016 +0530
+# Branch Bug1170281
+# Node ID 14e04e84d4b7338a0ed1a53ddb2132e8a5d108f4
+# Parent  32b53fea3ce07ac9a9cb17e3c4ead84eaff591d2
+Bug 1170281 - cleanup talos output.py file r?jmaher try: -b o -p linux64,win32 -u none -t all
+
+diff --git a/testing/talos/talos/output.py b/testing/talos/talos/output.py
+--- a/testing/talos/talos/output.py
++++ b/testing/talos/talos/output.py
+@@ -6,17 +6,17 @@
+ """output formats for Talos"""
+ 
+ import filter
+ import json
+ import utils
+ 
+ from mozlog import get_proxy_logger
+ 
+-# NOTE: we have a circular dependecy with output.py when we import results
++# NOTE: we have a circular dependency with output.py when we import results
+ import results as TalosResults
+ 
+ LOG = get_proxy_logger()
+ 
+ 
+ def filesizeformat(bytes):
+     """
+     Format the value like a 'human-readable' file size (i.e. 13 KB, 4.1 MB, 102
+@@ -40,129 +40,16 @@ class Output(object):
+ 
+     def __init__(self, results):
+         """
+         - results : TalosResults instance
+         """
+         self.results = results
+ 
+     def __call__(self):
+-        """return list of results strings"""
+-        raise NotImplementedError("Abstract base class")
+-
+-    def output(self, results, results_url, tbpl_output):
+-        """output to the results_url
+-        - results_url : http:// or file:// URL
+-        - results : list of results
+-        """
+-
+-        # parse the results url
+-        results_url_split = utils.urlsplit(results_url)
+-        results_scheme, results_server, results_path, _, _ = results_url_split
+-
+-        if results_scheme in ('http', 'https'):
+-            self.post(results, results_server, results_path, results_scheme,
+-                      tbpl_output)
+-        elif results_scheme == 'file':
+-            with open(results_path, 'w') as f:
+-                for result in results:
+-                    f.write("%s\n" % result)
+-        else:
+-            raise NotImplementedError(
+-                "%s: %s - only http://, https://, and file:// supported"
+-                % (self.__class__.__name__, results_url)
+-            )
+-
+-    def post(self, results, server, path, scheme, tbpl_output):
+-        raise NotImplementedError("Abstract base class")
+-
+-    @classmethod
+-    def shortName(cls, name):
+-        """short name for counters"""
+-        names = {"Working Set": "memset",
+-                 "% Processor Time": "%cpu",
+-                 "Private Bytes": "pbytes",
+-                 "RSS": "rss",
+-                 "XRes": "xres",
+-                 "Modified Page List Bytes": "modlistbytes",
+-                 "Main_RSS": "main_rss"}
+-        return names.get(name, name)
+-
+-    @classmethod
+-    def isMemoryMetric(cls, resultName):
+-        """returns if the result is a memory metric"""
+-        memory_metric = ['memset', 'rss', 'pbytes', 'xres', 'modlistbytes',
+-                         'main_rss', 'content_rss']  # measured in bytes
+-        return bool([i for i in memory_metric if i in resultName])
+-
+-    @classmethod
+-    def responsiveness_Metric(cls, val_list):
+-        return sum([float(x)*float(x) / 1000000.0 for x in val_list])
+-
+-    @classmethod
+-    def v8_Metric(cls, val_list):
+-        results = [i for i, j in val_list]
+-        score = 100 * filter.geometric_mean(results)
+-        return score
+-
+-    @classmethod
+-    def JS_Metric(cls, val_list):
+-        """v8 benchmark score"""
+-        results = [i for i, j in val_list]
+-        LOG.info("javascript benchmark")
+-        return sum(results)
+-
+-    @classmethod
+-    def CanvasMark_Metric(cls, val_list):
+-        """CanvasMark benchmark score (NOTE: this is identical to JS_Metric)"""
+-        results = [i for i, j in val_list]
+-        LOG.info("CanvasMark benchmark")
+-        return sum(results)
+-
+-
+-class PerfherderOutput(Output):
+-    def __init__(self, results):
+-        Output.__init__(self, results)
+-
+-    def output(self, results, results_url, tbpl_output):
+-        """output to the a file if results_url starts with file://
+-        - results : json instance
+-        - results_url : file:// URL
+-        """
+-
+-        # parse the results url
+-        results_url_split = utils.urlsplit(results_url)
+-        results_scheme, results_server, results_path, _, _ = results_url_split
+-
+-        # This is the output that treeherder expects to find when parsing the
+-        # log file
+-        LOG.info("PERFHERDER_DATA: %s" % json.dumps(results))
+-        if results_scheme in ('file'):
+-            json.dump(results, file(results_path, 'w'), indent=2,
+-                      sort_keys=True)
+-
+-    def post(self, results, server, path, scheme, tbpl_output):
+-        """conform to current code- not needed for perfherder"""
+-        pass
+-
+-    def construct_results(self, vals, testname):
+-        if 'responsiveness' in testname:
+-            return self.responsiveness_Metric([val for (val, page) in vals])
+-        elif testname.startswith('v8_7'):
+-            return self.v8_Metric(vals)
+-        elif testname.startswith('kraken'):
+-            return self.JS_Metric(vals)
+-        elif testname.startswith('tcanvasmark'):
+-            return self.CanvasMark_Metric(vals)
+-        elif len(vals) > 1:
+-            return filter.geometric_mean([i for i, j in vals])
+-        else:
+-            return filter.mean([i for i, j in vals])
+-
+-    def __call__(self):
+         suites = []
+         test_results = {
+             'framework': {
+                 'name': self.results.results[0].framework,
+             },
+             'suites': suites,
+         }
+ 
+@@ -277,10 +164,81 @@ class PerfherderOutput(Output):
+                         if len(vals) > 0:
+                             varray = [float(v) for v in vals]
+                             subtest['value'] = filter.mean(varray)
+             if counter_subtests:
+                 suites.append({'name': test.name(),
+                                'subtests': counter_subtests})
+         return test_results
+ 
+-# available output formats
+-formats = {'output_urls': PerfherderOutput}
++    def output(self, results, results_url, tbpl_output):
++        """output to the a file if results_url starts with file://
++        - results : json instance
++        - results_url : file:// URL
++        """
++
++        # parse the results url
++        results_url_split = utils.urlsplit(results_url)
++        results_scheme, results_server, results_path, _, _ = results_url_split
++
++        # This is the output that treeherder expects to find when parsing the
++        # log file
++        LOG.info("PERFHERDER_DATA: %s" % json.dumps(results))
++        if results_scheme in ('file'):
++            json.dump(results, file(results_path, 'w'), indent=2,
++                      sort_keys=True)
++
++    @classmethod
++    def shortName(cls, name):
++        """short name for counters"""
++        names = {"Working Set": "memset",
++                 "% Processor Time": "%cpu",
++                 "Private Bytes": "pbytes",
++                 "RSS": "rss",
++                 "XRes": "xres",
++                 "Modified Page List Bytes": "modlistbytes",
++                 "Main_RSS": "main_rss"}
++        return names.get(name, name)
++
++    @classmethod
++    def isMemoryMetric(cls, resultName):
++        """returns if the result is a memory metric"""
++        memory_metric = ['memset', 'rss', 'pbytes', 'xres', 'modlistbytes',
++                         'main_rss', 'content_rss']  # measured in bytes
++        return bool([i for i in memory_metric if i in resultName])
++
++    @classmethod
++    def responsiveness_Metric(cls, val_list):
++        return sum([float(x)*float(x) / 1000000.0 for x in val_list])
++
++    @classmethod
++    def v8_Metric(cls, val_list):
++        results = [i for i, j in val_list]
++        score = 100 * filter.geometric_mean(results)
++        return score
++
++    @classmethod
++    def JS_Metric(cls, val_list):
++        """v8 benchmark score"""
++        results = [i for i, j in val_list]
++        LOG.info("javascript benchmark")
++        return sum(results)
++
++    @classmethod
++    def CanvasMark_Metric(cls, val_list):
++        """CanvasMark benchmark score (NOTE: this is identical to JS_Metric)"""
++        results = [i for i, j in val_list]
++        LOG.info("CanvasMark benchmark")
++        return sum(results)
++
++    def construct_results(self, vals, testname):
++        if 'responsiveness' in testname:
++            return self.responsiveness_Metric([val for (val, page) in vals])
++        elif testname.startswith('v8_7'):
++            return self.v8_Metric(vals)
++        elif testname.startswith('kraken'):
++            return self.JS_Metric(vals)
++        elif testname.startswith('tcanvasmark'):
++            return self.CanvasMark_Metric(vals)
++        elif len(vals) > 1:
++            return filter.geometric_mean([i for i, j in vals])
++        else:
++            return filter.mean([i for i, j in vals])
+diff --git a/testing/talos/talos/results.py b/testing/talos/talos/results.py
+--- a/testing/talos/talos/results.py
++++ b/testing/talos/talos/results.py
+@@ -24,53 +24,28 @@ class TalosResults(object):
+         self.extra_options = []
+ 
+     def add(self, test_results):
+         self.results.append(test_results)
+ 
+     def add_extra_option(self, extra_option):
+         self.extra_options.append(extra_option)
+ 
+-    def check_output_formats(self, output_formats):
+-        """check output formats"""
+-
+-        # ensure formats are available
+-        formats = output_formats.keys()
+-        missing = self.check_formats_exist(formats)
+-        if missing:
+-            raise utils.TalosError("Output format(s) unknown: %s"
+-                                   % ','.join(missing))
+-
+-        # perform per-format check
+-        for format, urls in output_formats.items():
+-            cls = output.formats[format]
+-            cls.check(urls)
+-
+-    @classmethod
+-    def check_formats_exist(cls, formats):
+-        """
+-        ensure that all formats are registered
+-        return missing formats
+-        """
+-        return [i for i in formats if i not in output.formats]
+-
+     def output(self, output_formats):
+         """
+         output all results to appropriate URLs
+         - output_formats: a dict mapping formats to a list of URLs
+         """
+ 
+         tbpl_output = {}
+         try:
+-
+-            for key, urls in output_formats.items():
+-                _output = output.formats[key](self)
+-                results = _output()
+-                for url in urls:
+-                    _output.output(results, url, tbpl_output)
++            url = output_formats.items()
++            _output = output.Output(self)
++            results = _output()
++            _output.output(results, url, tbpl_output)
+ 
+         except utils.TalosError, e:
+             # print to results.out
+             try:
+                 _output = output.GraphserverOutput(self)
+                 results = _output()
+                 _output.output(
+                     'file://%s' % os.path.join(os.getcwd(), 'results.out'),
+diff --git a/testing/talos/talos/run_tests.py b/testing/talos/talos/run_tests.py
+--- a/testing/talos/talos/run_tests.py
++++ b/testing/talos/talos/run_tests.py
+@@ -165,17 +165,16 @@ def run_tests(config, browser_config):
+         results_urls = dict(
+             # another hack; datazilla stands for Perfherder
+             # and do not require url, but a non empty dict is required...
+             output_urls=['local.json'],
+         )
+     else:
+         # local mode, output to files
+         results_urls = dict(output_urls=[os.path.abspath('local.json')])
+-    talos_results.check_output_formats(results_urls)
+ 
+     httpd = setup_webserver(browser_config['webserver'])
+     httpd.start()
+ 
+     # if e10s add as extra results option
+     if config['e10s']:
+         talos_results.add_extra_option('e10s')
+ 
