@@ -1,0 +1,691 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1467130515 -19800
+#      Tue Jun 28 21:45:15 2016 +0530
+# Branch Bug-1282398
+# Node ID e14af7b8d8cd4697c7a5ae0db53d3262cb9f7fac
+# Parent  50b56662014249681a344d068ce6b9509f4dcae8
+Bug 1282398 - Fix all flake8 errors in testing/talos/talos. f?jmaher
+
+diff --git a/testing/talos/talos/cmanager_linux.py b/testing/talos/talos/cmanager_linux.py
+--- a/testing/talos/talos/cmanager_linux.py
++++ b/testing/talos/talos/cmanager_linux.py
+@@ -128,17 +128,17 @@ def GetXRes(pids):
+     for pid in pids:
+         if pid in xres_output:
+             data = xres_output[pid]['total bytes']
+             data = data.lstrip('~')  # total bytes is like '~4728761'
+             try:
+                 data = float(data)
+                 XRes += data
+             except ValueError:
+-                print "Invalid data, not a float"
++                print("Invalid data, not a float")
+                 raise
+         else:
+             raise Exception("Could not find PID=%s in xrestop output" % pid)
+     return XRes
+ 
+ 
+ class LinuxCounterManager(CounterManager):
+     """This class manages the monitoring of a process with any number of
+@@ -173,9 +173,9 @@ class LinuxCounterManager(CounterManager
+             return None
+ 
+     def pidList(self):
+         """Updates the list of PIDs we're interested in"""
+         try:
+             return [self.process.pid] + [child.pid
+                                          for child in self.process.children()]
+         except:
+-            print "WARNING: problem updating child PID's"
++            print("WARNING: problem updating child PID's")
+diff --git a/testing/talos/talos/cmanager_mac.py b/testing/talos/talos/cmanager_mac.py
+--- a/testing/talos/talos/cmanager_mac.py
++++ b/testing/talos/talos/cmanager_mac.py
+@@ -15,17 +15,17 @@ def GetProcessData(pid):
+     """
+     command = ['ps -o pid,vsize,rss -p'+str(pid)]
+     try:
+         handle = subprocess.Popen(command, stdout=subprocess.PIPE,
+                                   universal_newlines=True, shell=True)
+         handle.wait()
+         data = handle.stdout.readlines()
+     except:
+-        print "Unexpected error executing '%s': %s", (command, sys.exc_info())
++        print("Unexpected error executing '%s': %s", (command, sys.exc_info()))
+         raise
+ 
+     # First line is header output should look like:
+     # PID      VSZ    RSS
+     # 3210    75964    920
+     line = data[1]
+     line = line.split()
+     if line[0] == str(pid):
+@@ -70,17 +70,17 @@ class MacCounterManager(CounterManager):
+         self.pid = process.pid
+ 
+         self._loadCounters()
+         self.registerCounters(counters)
+ 
+     def getCounterValue(self, counterName):
+         """Returns the last value of the counter 'counterName'"""
+         if counterName not in self.registeredCounters:
+-            print ("Warning: attempting to collect counter %s and it is not"
+-                   " registered" % counterName)
++            print("Warning: attempting to collect counter %s and it is not"
++                  " registered" % counterName)
+             return
+ 
+         try:
+             return self.registeredCounters[counterName][0](self.pid)
+-        except Exception, e:
+-            print ("Error in collecting counter: %s, pid: %s, exception: %s"
+-                   % (counterName, self.pid, e))
++        except Exception as e:
++            print("Error in collecting counter: %s, pid: %s, exception: %s"
++                  % (counterName, self.pid, e))
+diff --git a/testing/talos/talos/cmdline.py b/testing/talos/talos/cmdline.py
+--- a/testing/talos/talos/cmdline.py
++++ b/testing/talos/talos/cmdline.py
+@@ -17,40 +17,40 @@ class _StopAction(argparse.Action):
+             default=default,
+             nargs=0,
+             help=help)
+ 
+ 
+ class _ListTests(_StopAction):
+     def __call__(self, parser, namespace, values, option_string=None):
+         from talos import test
+-        print 'Available tests:'
+-        print '================\n'
++        print('Available tests:')
++        print('================\n')
+         test_class_names = [
+             (test_class.name(), test_class.description())
+             for test_class in test.test_dict().itervalues()
+         ]
+         test_class_names.sort()
+         for name, description in test_class_names:
+-            print name
+-            print '-'*len(name)
+-            print description
++            print(name)
++            print('-'*len(name))
++            print(description)
+             print  # Appends a single blank line to the end
+         parser.exit()
+ 
+ 
+ class _ListSuite(_StopAction):
+     def __call__(self, parser, namespace, values, option_string=None):
+         from talos.config import suites_conf
+-        print 'Available suites:'
++        print('Available suites:')
+         conf = suites_conf()
+         max_suite_name = max([len(s) for s in conf])
+         pattern = " %%-%ds (%%s)" % max_suite_name
+         for name in conf:
+-            print pattern % (name, ':'.join(conf[name]['tests']))
++            print(pattern % (name, ':'.join(conf[name]['tests'])))
+         print
+         parser.exit()
+ 
+ 
+ def create_parser(mach_interface=False):
+     parser = argparse.ArgumentParser()
+     add_arg = parser.add_argument
+ 
+diff --git a/testing/talos/talos/config.py b/testing/talos/talos/config.py
+--- a/testing/talos/talos/config.py
++++ b/testing/talos/talos/config.py
+@@ -462,11 +462,11 @@ def get_config(argv=None):
+ def get_configs(argv=None):
+     config = get_config(argv=argv)
+     browser_config = get_browser_config(config)
+     return config, browser_config
+ 
+ 
+ if __name__ == '__main__':
+     cfgs = get_configs()
+-    print cfgs[0]
++    print(cfgs[0])
+     print
+-    print cfgs[1]
++    print(cfgs[1])
+diff --git a/testing/talos/talos/mainthreadio.py b/testing/talos/talos/mainthreadio.py
+--- a/testing/talos/talos/mainthreadio.py
++++ b/testing/talos/talos/mainthreadio.py
+@@ -82,17 +82,17 @@ def parse(logfilename, data):
+                             float(entries[INDEX_DURATION])
+                     prev_filename = entries[INDEX_FILENAME]
+                 elif len(entries) == LENGTH_NEXT_STAGE_ENTRY and \
+                         entries[1] == TOKEN_NEXT_STAGE:
+                     # Format 2: next stage
+                     stage = stage + 1
+             return True
+     except IOError as e:
+-        print "%s: %s" % (e.filename, e.strerror)
++        print("%s: %s" % (e.filename, e.strerror))
+         return False
+ 
+ 
+ def write_output(outfilename, data):
+     # Write the data out so that we can track it
+     try:
+         with open(outfilename, 'w') as outfile:
+             outfile.write("[\n")
+@@ -103,39 +103,39 @@ def write_output(outfilename, data):
+                 outfile.write(output)
+                 if idx >= 0:
+                     outfile.write(",\n")
+                 else:
+                     outfile.write("\n")
+             outfile.write("]\n")
+             return True
+     except IOError as e:
+-        print "%s: %s" % (e.filename, e.strerror)
++        print("%s: %s" % (e.filename, e.strerror))
+         return False
+ 
+ 
+ def main(argv):
+     if len(argv) < 4:
+-        print ("Usage: %s <main_thread_io_log_file> <output_file> <xre_path>"
+-               % argv[0])
++        print("Usage: %s <main_thread_io_log_file> <output_file> <xre_path>"
++              % argv[0])
+         return 1
+     if not os.path.exists(argv[3]):
+-        print "XRE Path \"%s\" does not exist" % argv[3]
++        print("XRE Path \"%s\" does not exist" % argv[3])
+         return 1
+     data = {}
+     if not parse(argv[1], data):
+-        print "Log parsing failed"
++        print("Log parsing failed")
+         return 1
+ 
+     wl = whitelist.Whitelist(test_name='mainthreadio',
+                              paths={"{xre}": argv[3]},
+                              path_substitutions=PATH_SUBSTITUTIONS,
+                              name_substitutions=NAME_SUBSTITUTIONS)
+     if not wl.load(WHITELIST_FILENAME):
+-        print "Failed to load whitelist"
++        print("Failed to load whitelist")
+         return 1
+ 
+     wl.filter(data, TUPLE_FILENAME_INDEX)
+ 
+     if not write_output(argv[2], data):
+         return 1
+ 
+     # Disabled until we enable TBPL oranges
+diff --git a/testing/talos/talos/results.py b/testing/talos/talos/results.py
+--- a/testing/talos/talos/results.py
++++ b/testing/talos/talos/results.py
+@@ -39,32 +39,32 @@ class TalosResults(object):
+         try:
+ 
+             for key, urls in output_formats.items():
+                 _output = output.Output(self)
+                 results = _output()
+                 for url in urls:
+                     _output.output(results, url, tbpl_output)
+ 
+-        except utils.TalosError, e:
++        except utils.TalosError as e:
+             # print to results.out
+             try:
+                 _output = output.GraphserverOutput(self)
+                 results = _output()
+                 _output.output(
+                     'file://%s' % os.path.join(os.getcwd(), 'results.out'),
+                     results
+                 )
+             except:
+                 pass
+-            print '\nFAIL: %s' % str(e).replace('\n', '\nRETURN:')
++            print('\nFAIL: %s' % str(e).replace('\n', '\nRETURN:'))
+             raise e
+ 
+         if tbpl_output:
+-            print "TinderboxPrint: TalosResult: %s" % json.dumps(tbpl_output)
++            print("TinderboxPrint: TalosResult: %s" % json.dumps(tbpl_output))
+ 
+ 
+ class TestResults(object):
+     """container object for all test results across cycles"""
+ 
+     def __init__(self, test_config, global_counters=None, framework=None):
+         self.results = []
+         self.test_config = test_config
+@@ -362,17 +362,17 @@ class BrowserLogResults(object):
+             position = _last_token
+             previous_tokens = tokens
+ 
+     def get_single_token(self, start_token, end_token):
+         """browser logs should only have a single instance of token pairs"""
+         try:
+             parts, last_token = utils.tokenize(self.results_raw,
+                                                start_token, end_token)
+-        except AssertionError, e:
++        except AssertionError as e:
+             self.error(str(e))
+         if not parts:
+             return None, -1  # no match
+         if len(parts) != 1:
+             self.error("Multiple matches for %s,%s" % (start_token, end_token))
+         return parts[0], last_token
+ 
+     def results(self):
+@@ -421,18 +421,18 @@ class BrowserLogResults(object):
+ 
+         if not set(counters).union(set(mainthread_counters))\
+                 .intersection(counter_results.keys()):
+             # no xperf counters to accumulate
+             return
+ 
+         filename = 'etl_output_thread_stats.csv'
+         if not os.path.exists(filename):
+-            print ("Warning: we are looking for xperf results file %s, and"
+-                   " didn't find it" % filename)
++            print("Warning: we are looking for xperf results file %s, and"
++                  " didn't find it" % filename)
+             return
+ 
+         contents = file(filename).read()
+         lines = contents.splitlines()
+         reader = csv.reader(lines)
+         header = None
+         for row in reader:
+             # Read CSV
+@@ -453,18 +453,18 @@ class BrowserLogResults(object):
+             # Accrue counter
+             if counter_name in counter_results:
+                 counter_results.setdefault(counter_name, []).append(value)
+                 self.using_xperf = True
+ 
+         if (set(mainthread_counters).intersection(counter_results.keys())):
+             filename = 'etl_output.csv'
+             if not os.path.exists(filename):
+-                print ("Warning: we are looking for xperf results file"
+-                       " %s, and didn't find it" % filename)
++                print("Warning: we are looking for xperf results file"
++                      " %s, and didn't find it" % filename)
+                 return
+ 
+             contents = file(filename).read()
+             lines = contents.splitlines()
+             reader = csv.reader(lines)
+             header = None
+             for row in reader:
+                 row = [i.strip() for i in row]
+diff --git a/testing/talos/talos/run_tests.py b/testing/talos/talos/run_tests.py
+--- a/testing/talos/talos/run_tests.py
++++ b/testing/talos/talos/run_tests.py
+@@ -145,17 +145,17 @@ def run_tests(config, browser_config):
+     browser_config['browser_name'] = version_info['application_name']
+     browser_config['browser_version'] = version_info['application_version']
+     browser_config['buildid'] = version_info['application_buildid']
+     try:
+         browser_config['repository'] = version_info['application_repository']
+         browser_config['sourcestamp'] = version_info['application_changeset']
+     except KeyError:
+         if not browser_config['develop']:
+-            print "unable to find changeset or repository: %s" % version_info
++            print("unable to find changeset or repository: %s" % version_info)
+             sys.exit()
+         else:
+             browser_config['repository'] = 'develop'
+             browser_config['sourcestamp'] = 'develop'
+ 
+     # get test date in seconds since epoch
+     if testdate:
+         date = int(time.mktime(time.strptime(testdate,
+@@ -223,26 +223,26 @@ def run_tests(config, browser_config):
+         httpd.stop()
+ 
+     LOG.info("Completed test suite (%s)" % timer.elapsed())
+ 
+     # output results
+     if results_urls:
+         talos_results.output(results_urls)
+         if browser_config['develop'] or config['sps_profile']:
+-            print ("Thanks for running Talos locally. Results are in %s"
+-                   % (results_urls['output_urls']))
++            print("Thanks for running Talos locally. Results are in %s"
++                  % (results_urls['output_urls']))
+ 
+     # we will stop running tests on a failed test, or we will return 0 for
+     # green
+     return 0
+ 
+ 
+ def main(args=sys.argv[1:]):
+     try:
+         config, browser_config = get_configs()
+-    except ConfigurationError, exc:
++    except ConfigurationError as exc:
+         sys.exit("ERROR: %s" % exc)
+     sys.exit(run_tests(config, browser_config))
+ 
+ 
+ if __name__ == '__main__':
+     main()
+diff --git a/testing/talos/talos/talosconfig.py b/testing/talos/talos/talosconfig.py
+--- a/testing/talos/talos/talosconfig.py
++++ b/testing/talos/talos/talosconfig.py
+@@ -20,17 +20,17 @@ def generateTalosConfig(command_line, br
+             browser_config['testname'] = test_config['name']
+ 
+     browser_config['command'] = ' '.join(command_line)
+ 
+     if (('xperf_providers' in test_config) and
+         ('xperf_user_providers' in test_config) and
+         ('xperf_stackwalk' in test_config)):  # noqa
+ 
+-        print "extending with xperf!"
++        print("extending with xperf!")
+         browser_config['xperf_providers'] = test_config['xperf_providers']
+         browser_config['xperf_user_providers'] = \
+             test_config['xperf_user_providers']
+         browser_config['xperf_stackwalk'] = test_config['xperf_stackwalk']
+         browser_config['processID'] = pid
+         browser_config['approot'] = \
+             os.path.dirname(browser_config['browser_path'])
+         bcontroller_vars.extend(['xperf_providers', 'xperf_user_providers',
+diff --git a/testing/talos/talos/ttest.py b/testing/talos/talos/ttest.py
+--- a/testing/talos/talos/ttest.py
++++ b/testing/talos/talos/ttest.py
+@@ -190,17 +190,17 @@ class TTest(object):
+                     mtio = subprocess.Popen(command,
+                                             env=os.environ.copy(),
+                                             stdout=subprocess.PIPE)
+                     output, stderr = mtio.communicate()
+                     for line in output.split('\n'):
+                         if line.strip() == "":
+                             continue
+ 
+-                        print line
++                        print(line)
+                         mainthread_error_count += 1
+                     mozfile.remove(rawlog)
+ 
+             if test_config['cleanup']:
+                 # HACK: add the pid to support xperf where we require
+                 # the pid in post processing
+                 talosconfig.generateTalosConfig(command_args,
+                                                 browser_config,
+diff --git a/testing/talos/talos/whitelist.py b/testing/talos/talos/whitelist.py
+--- a/testing/talos/talos/whitelist.py
++++ b/testing/talos/talos/whitelist.py
+@@ -33,17 +33,17 @@ class Whitelist:
+         try:
+             with open(filename, 'r') as fHandle:
+                 temp = json.load(fHandle)
+ 
+             for whitelist_name in temp:
+                 self.listmap[whitelist_name.lower()] = temp[whitelist_name]
+ 
+         except IOError as e:
+-            print "%s: %s" % (e.filename, e.strerror)
++            print("%s: %s" % (e.filename, e.strerror))
+             return False
+         return True
+ 
+     def sanitize_filename(self, filename):
+         filename = filename.lower()
+         filename.replace(' (x86)', '')
+ 
+         for path, subst in self.path_substitutions.iteritems():
+@@ -131,28 +131,28 @@ class Whitelist:
+         for filename, data in errors.iteritems():
+             for datum in data:
+                 error_strs.append("File '%s' was accessed and we were not"
+                                   " expecting it: %r" % (filename, datum))
+         return error_strs
+ 
+     def print_errors(self, error_strs):
+         for error_msg in error_strs:
+-            print "TEST-UNEXPECTED-FAIL | %s | %s" % (self.test_name,
+-                                                      error_msg)
++            print("TEST-UNEXPECTED-FAIL | %s | %s" % (self.test_name,
++                                                      error_msg))
+ 
+     # Note that we don't store dependent libs in listmap. This makes
+     # save_baseline cleaner. Since a baseline whitelist should not include
+     # the dependent_libs, we would need to filter them out if everything was
+     # stored in the same dict.
+     def load_dependent_libs(self):
+         filename = "%s%sdependentlibs.list" % (self.paths[KEY_XRE],
+                                                os.path.sep)
+         try:
+             with open(filename, 'r') as f:
+                 libs = f.readlines()
+             self.dependent_libs = \
+                 {"%s%s%s" % (KEY_XRE, os.path.sep, lib.strip()):
+                     {'ignore': True} for lib in libs}
+             return True
+         except IOError as e:
+-            print "%s: %s" % (e.filename, e.strerror)
++            print("%s: %s" % (e.filename, e.strerror))
+             return False
+diff --git a/testing/talos/talos/xtalos/etlparser.py b/testing/talos/talos/xtalos/etlparser.py
+--- a/testing/talos/talos/xtalos/etlparser.py
++++ b/testing/talos/talos/xtalos/etlparser.py
+@@ -74,17 +74,17 @@ def filterOutHeader(data):
+ 
+ def getIndex(eventType, colName):
+     if colName not in gHeaders[eventType]:
+         return None
+     return gHeaders[eventType].index(colName)
+ 
+ 
+ def readFile(filename):
+-    print "etlparser: in readfile: %s" % filename
++    print("etlparser: in readfile: %s" % filename)
+     data = csv.reader(open(filename, 'rb'), delimiter=',', quotechar='"',
+                       skipinitialspace=True)
+     data = filterOutHeader(data)
+     return data
+ 
+ 
+ def fileSummary(row, stage, retVal):
+     event = row[EVENTNAME_INDEX]
+@@ -145,25 +145,25 @@ def etl2csv(xperf_path, etl_filename, de
+     """
+ 
+     xperf_cmd = [xperf_path,
+                  '-merge',
+                  '%s.user' % etl_filename,
+                  '%s.kernel' % etl_filename,
+                  etl_filename]
+     if debug:
+-        print "executing '%s'" % subprocess.list2cmdline(xperf_cmd)
++        print("executing '%s'" % subprocess.list2cmdline(xperf_cmd))
+     subprocess.call(xperf_cmd)
+ 
+     csv_filename = '%s.csv' % etl_filename
+     xperf_cmd = [xperf_path,
+                  '-i', etl_filename,
+                  '-o', csv_filename]
+     if debug:
+-        print "executing '%s'" % subprocess.list2cmdline(xperf_cmd)
++        print("executing '%s'" % subprocess.list2cmdline(xperf_cmd))
+     subprocess.call(xperf_cmd)
+     return csv_filename
+ 
+ 
+ def trackThread(row, firefoxPID):
+     event, proc, tid = \
+         row[EVENTNAME_INDEX], row[PROCESS_INDEX], row[THREAD_ID_INDEX]
+     if event in ["T-DCStart", "T-Start"]:
+@@ -221,17 +221,17 @@ def updateStage(row, stage):
+         stage = 2
+     return stage
+ 
+ 
+ def loadWhitelist(filename):
+     if not filename:
+         return
+     if not os.path.exists(filename):
+-        print "Warning: xperf whitelist %s was not found" % filename
++        print("Warning: xperf whitelist %s was not found" % filename)
+         return
+     lines = file(filename).readlines()
+     # Expand paths
+     lines = [os.path.expandvars(elem.strip()) for elem in lines]
+     files = set()
+     dirs = set()
+     recur = set()
+     for line in lines:
+@@ -271,17 +271,17 @@ def etlparser(xperf_path, etl_filename, 
+         outFile = open(outputFile, 'w')
+     else:
+         outFile = sys.stdout
+ 
+     files = {}
+     io = {}
+     stage = 0
+ 
+-    print "reading etl filename: %s" % etl_filename
++    print("reading etl filename: %s" % etl_filename)
+     csvname = etl2csv(xperf_path, etl_filename, debug=debug)
+     for row in readFile(csvname):
+         event = row[EVENTNAME_INDEX]
+         if event in ["T-DCStart", "T-Start", "T-DCEnd", "T-End"]:
+             trackThread(row, processID)
+         elif event in ["FileIoRead", "FileIoWrite"] and \
+                 row[THREAD_ID_INDEX] in gThreads:
+             fileSummary(row, stage, files)
+@@ -299,17 +299,17 @@ def etlparser(xperf_path, etl_filename, 
+     output = "thread, stage, counter, value\n"
+     for cntr in sorted(io.iterkeys()):
+         output += "%s, %s\n" % (", ".join(cntr), str(io[cntr]))
+     if outputFile:
+         fname = "%s_thread_stats%s" % os.path.splitext(outputFile)
+         with open(fname, "w") as f:
+             f.write(output)
+     else:
+-        print output
++        print(output)
+ 
+     whitelist = loadWhitelist(whitelist_file)
+ 
+     header = ("filename, tid, stage, readcount, readbytes, writecount,"
+               " writebytes")
+     outFile.write(header + "\n")
+ 
+     # Filter out stages, threads, and whitelisted files that we're not
+@@ -442,17 +442,17 @@ def etlparser(xperf_path, etl_filename, 
+                              files[row]['DiskReadBytes'],
+                              files[row]['DiskWriteBytes']))
+ 
+     if errors:
+         # output specific errors to be picked up by tbpl parser
+         for error in errors:
+             # NOTE: the ' :' is intentional, without the space before the :,
+             # some parser will translate this
+-            print "TEST-UNEXPECTED-FAIL : xperf: %s" % error
++            print("TEST-UNEXPECTED-FAIL : xperf: %s" % error)
+ 
+         # We detect if browser_failures.txt exists to exit and turn the job
+         # orange
+         if error_filename:
+             with open(error_filename, 'w') as errorFile:
+                 errorFile.write('\n'.join(errors))
+ 
+ # TODO: commented this out from bug 1205005, we have a memory error in blobber
+diff --git a/testing/talos/talos/xtalos/parse_xperf.py b/testing/talos/talos/xtalos/parse_xperf.py
+--- a/testing/talos/talos/xtalos/parse_xperf.py
++++ b/testing/talos/talos/xtalos/parse_xperf.py
+@@ -9,17 +9,17 @@ import sys
+ import xtalos
+ import subprocess
+ import etlparser
+ 
+ 
+ def stop(xperf_path, debug=False):
+     xperf_cmd = [xperf_path, '-stop', '-stop', 'talos_ses']
+     if debug:
+-        print "executing '%s'" % subprocess.list2cmdline(xperf_cmd)
++        print("executing '%s'" % subprocess.list2cmdline(xperf_cmd))
+     subprocess.call(xperf_cmd)
+ 
+ 
+ def stop_from_config(config_file=None, debug=False, **kwargs):
+     """start from a YAML config file"""
+ 
+     # required options and associated error messages
+     required = {'xperf_path': "xperf_path not given",
+@@ -62,13 +62,13 @@ def main(args=sys.argv[1:]):
+     parser = xtalos.XtalosOptions()
+     args = parser.parse_args(args)
+ 
+     # start xperf
+     try:
+         stop_from_config(config_file=args.configFile,
+                          debug=args.debug_level >= xtalos.DEBUG_INFO,
+                          **args.__dict__)
+-    except xtalos.XTalosError, e:
++    except xtalos.XTalosError as e:
+         parser.error(str(e))
+ 
+ if __name__ == "__main__":
+     main()
+diff --git a/testing/talos/talos/xtalos/start_xperf.py b/testing/talos/talos/xtalos/start_xperf.py
+--- a/testing/talos/talos/xtalos/start_xperf.py
++++ b/testing/talos/talos/xtalos/start_xperf.py
+@@ -21,17 +21,17 @@ def start(xperf_path, xperf_providers, x
+                  '-f', '%s.kernel' % etl_filename,
+                  '-start', 'talos_ses',
+                  '-on', '+'.join(xperf_user_providers),
+                  '-MaxBuffers', '1024',
+                  '-BufferSize', '1024',
+                  '-f', '%s.user' % etl_filename
+                  ]
+     if debug:
+-        print "executing '%s'" % subprocess.list2cmdline(xperf_cmd)
++        print("executing '%s'" % subprocess.list2cmdline(xperf_cmd))
+     subprocess.call(xperf_cmd)
+ 
+ 
+ def start_from_config(config_file=None, debug=False, **kwargs):
+     """start from a YAML config file"""
+ 
+     # required options and associated error messages
+     required = {'xperf_path': "xperf_path not given",
+@@ -71,14 +71,14 @@ def main(args=sys.argv[1:]):
+     parser = xtalos.XtalosOptions()
+     args = parser.parse_args(args)
+ 
+     # start xperf
+     try:
+         start_from_config(config_file=args.configFile,
+                           debug=args.debug_level >= xtalos.DEBUG_INFO,
+                           **args.__dict__)
+-    except xtalos.XTalosError, e:
++    except xtalos.XTalosError as e:
+         parser.error(str(e))
+ 
+ 
+ if __name__ == "__main__":
+     main()
+diff --git a/testing/talos/talos/xtalos/xtalos.py b/testing/talos/talos/xtalos/xtalos.py
+--- a/testing/talos/talos/xtalos/xtalos.py
++++ b/testing/talos/talos/xtalos/xtalos.py
+@@ -115,12 +115,12 @@ class XtalosOptions(argparse.ArgumentPar
+ 
+         # override options from config file
+         if options.configFile:
+             options_from_config(options.__dict__, options.configFile)
+ 
+         # ensure xperf path exists
+         options.xperf_path = os.path.abspath(options.xperf_path)
+         if not os.path.exists(options.xperf_path):
+-            print "ERROR: xperf_path '%s' does not exist" % options.xperf_path
++            print("ERROR: xperf_path '%s' does not exist" % options.xperf_path)
+             return None
+ 
+         return options

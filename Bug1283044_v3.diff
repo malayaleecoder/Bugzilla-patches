@@ -1,0 +1,1123 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1467366452 -19800
+#      Fri Jul 01 15:17:32 2016 +0530
+# Branch Bug-1283044
+# Node ID 96a612c120e079e4a65eb57c19aba055b3743894
+# Parent  5140750b9233ff2c121b4244f418b94599750f87
+Bug 1283044 - Fix all flake8 error in testing/talos for python3. r?jmaher
+
+diff --git a/testing/talos/INSTALL.py b/testing/talos/INSTALL.py
+--- a/testing/talos/INSTALL.py
++++ b/testing/talos/INSTALL.py
+@@ -13,39 +13,45 @@ import sys
+ import urllib2
+ try:
+     from subprocess import check_call as call
+ except:
+     from subprocess import call
+ 
+ # globals
+ here = os.path.dirname(os.path.abspath(__file__))
+-VIRTUALENV='https://raw.github.com/pypa/virtualenv/1.10/virtualenv.py'
++VIRTUALENV = 'https://raw.github.com/pypa/virtualenv/1.10/virtualenv.py'
++
+ 
+ def which(binary, path=os.environ['PATH']):
+     dirs = path.split(os.pathsep)
+     for dir in dirs:
+         if os.path.isfile(os.path.join(dir, path)):
+             return os.path.join(dir, path)
+         if os.path.isfile(os.path.join(dir, path + ".exe")):
+             return os.path.join(dir, path + ".exe")
+ 
++
+ def main(args=sys.argv[1:]):
+ 
+     # sanity check
+     # ensure setup.py exists
+     setup_py = os.path.join(here, 'setup.py')
+     assert os.path.exists(setup_py), "setup.py not found"
+ 
+     # create a virtualenv
+     virtualenv = which('virtualenv') or which('virtualenv.py')
+     if virtualenv:
+         call([virtualenv, '--system-site-packages', here])
+     else:
+-        process = subprocess.Popen([sys.executable, '-', '--system-site-packages', here], stdin=subprocess.PIPE)
++        process = subprocess.Popen([sys.executable,
++                                    '-',
++                                    '--system-site-packages',
++                                    here],
++                                   stdin=subprocess.PIPE)
+         stdout, stderr = process.communicate(input=urllib2.urlopen(VIRTUALENV).read())
+ 
+     # find the virtualenv's python
+     for i in ('bin', 'Scripts'):
+         bindir = os.path.join(here, i)
+         if os.path.exists(bindir):
+             break
+     else:
+diff --git a/testing/talos/diff-talos.py b/testing/talos/diff-talos.py
+deleted file mode 100755
+--- a/testing/talos/diff-talos.py
++++ /dev/null
+@@ -1,199 +0,0 @@
+-#!/usr/bin/env python
+-
+-# This Source Code Form is subject to the terms of the Mozilla Public
+-# License, v. 2.0. If a copy of the MPL was not distributed with this
+-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-
+-"""
+-This is a simple script that does one thing only: compare talos runs from
+-two revisions. It is intended to check which of two try runs is best or if
+-a try improves over the m-c or m-i revision in branches from.
+-
+-A big design goal is to avoid bit rot and to assert when bit rot is detected.
+-The set of tests we run is a moving target. When possible this script
+-should work with any test set, but in parts where it has to hard code
+-information, it should try to assert that it is valid so that changes
+-are detected and it is fixed earlier.
+-"""
+-
+-import json
+-import urllib2
+-import math
+-import sys
+-from optparse import OptionParser
+-
+-# FIXME: currently we assert that we know all the benchmarks just so
+-# we are sure to maintain the bigger_is_better set updated. Is there a better
+-# way to find/compute it?
+-bigger_is_better = frozenset(('v8_7', 'dromaeo_dom', 'dromaeo_css'))
+-
+-smaller_is_better = frozenset(('tdhtmlr_paint', 'tp5n_main_rss_paint',
+-                               'ts_paint', 'tp5n_paint', 'tsvgr_opacity',
+-                               'a11yr_paint', 'kraken',
+-                               'tdhtmlr_nochrome_paint',
+-                               'tspaint_places_generated_med', 'tpaint',
+-                               'tp5n_shutdown_paint', 'tsvgr',
+-                               'tp5n_pbytes_paint', 'tscrollr_paint',
+-                               'tspaint_places_generated_max',
+-                               'tp5n_responsiveness_paint',
+-                               'sunspider', 'tp5n_xres_paint', 'num_ctors',
+-                               'tresize', 'trobopan', 'tcheckerboard',
+-                               'tcheck3', 'tcheck2', 'tprovider',
+-                               'tp5n_modlistbytes_paint',
+-                               'tp4m_nochrome', 'tp4m_main_rss_nochrome',
+-                               'tp4m_shutdown_nochrome', 'tdhtml_nochrome',
+-                               'ts_shutdown', 'tp5n_%cpu_paint', 'ts',
+-                               'tsvg_nochrome', 'tp5n_content_rss_paint',
+-                               'tp5n_main_startup_fileio_paint',
+-                               'tp5n_nonmain_normal_netio_paint',
+-                               'tp5n_nonmain_startup_fileio_paint',
+-                               'tp5n_main_normal_fileio_paint',
+-                               'tp5n_nonmain_normal_fileio_paint',
+-                               'tp5n_main_startup_netio_paint',
+-                               'tp5n_main_normal_netio_paint',
+-                               'tp5n_main_shutdown_netio_paint',
+-                               'tp5n_main_shutdown_fileio_paint'))
+-
+-all_benchmarks = smaller_is_better | bigger_is_better
+-assert len(smaller_is_better & bigger_is_better) == 0
+-
+-def get_raw_data_for_revisions(revisions):
+-    """Loads data for the revisions, returns an array with one element for each
+-    revision."""
+-    selectors = ["revision=%s" % revision for revision in revisions]
+-    selector = '&'.join(selectors)
+-    url = "http://graphs.mozilla.org/api/test/runs/revisions?%s" % selector
+-    url_stream = urllib2.urlopen(url)
+-    data = json.load(url_stream)
+-    assert frozenset(data.keys()) == frozenset(('stat', 'revisions'))
+-    assert data['stat'] == 'ok'
+-    rev_data = data['revisions']
+-    assert frozenset(rev_data.keys()) == frozenset(revisions)
+-    return [rev_data[r] for r in revisions]
+-
+-def mean(values):
+-    return float(sum(values))/len(values)
+-
+-def c4(n):
+-    n = float(n)
+-    numerator = math.gamma(n/2)*math.sqrt(2/(n-1))
+-    denominator = math.gamma((n-1)/2)
+-    return numerator/denominator
+-
+-def unbiased_standard_deviation(values):
+-    n = len(values)
+-    if n == 1:
+-        return None
+-    acc = 0
+-    avg = mean(values)
+-    for i in values:
+-        dist = i - avg
+-        acc += dist * dist
+-    return math.sqrt(acc/(n-1))/c4(n)
+-
+-class BenchmarkResult:
+-    """ Stores the summary (mean and standard deviation) of a set of talus
+-    runs on the same revision and OS."""
+-    def __init__(self, avg, std):
+-        self.avg = avg
+-        self.std = std
+-    def __str__(self):
+-        t = "%s," % self.avg
+-        return "(%-13s %s)" % (t, self.std)
+-
+-# FIXME: This function computes the statistics of multiple runs of talos on a
+-# single revision. Should it also support computing statistics over runs of
+-# different revisions assuming the revisions are equivalent from a performance
+-# perspective?
+-def digest_revision_data(data):
+-    ret = {}
+-    benchmarks = frozenset(data.keys())
+-    # assert that all the benchmarks are known. If they are not,
+-    # smaller_is_better or bigger_is_better needs to be updated depending on
+-    # the benchmark type.
+-    assert all_benchmarks.issuperset(benchmarks), \
+-        "%s not found in all_benchmarks" % ','.join((benchmarks - all_benchmarks))
+-    for benchmark in benchmarks:
+-        benchmark_data = data[benchmark]
+-        expected_keys = frozenset(("test_runs", "name", "id"))
+-        assert frozenset(benchmark_data.keys()) == expected_keys
+-        test_runs = benchmark_data["test_runs"]
+-        operating_systems = test_runs.keys()
+-        results = {}
+-        for os in operating_systems:
+-            os_runs = test_runs[os]
+-            values = []
+-            for os_run in os_runs:
+-                # there are 4 fields: test run id, build id, timestamp,
+-                # mean value
+-                assert len(os_run) == 4
+-                values.append(os_run[3])
+-            avg = mean(values)
+-            std = unbiased_standard_deviation(values)
+-            results[os] = BenchmarkResult(avg, std)
+-        ret[benchmark] = results
+-    return ret
+-
+-def get_data_for_revisions(revisions):
+-    raw_data = get_raw_data_for_revisions(revisions)
+-    return [digest_revision_data(x) for x in raw_data]
+-
+-def overlaps(a, b):
+-    return a[1] >= b[0] and b[1] >= a[0]
+-
+-def is_significant(old, new):
+-    # conservative hack: if we don't know, say it is significant.
+-    if old.std is None or new.std is None:
+-        return True
+-    # use a 2 standard deviation interval, which is about 95% confidence.
+-    old_interval = [old.avg - old.std, old.avg + old.std]
+-    new_interval = [new.avg - new.std, new.avg + new.std]
+-    return not overlaps(old_interval, new_interval)
+-
+-def compute_difference(benchmark, old, new):
+-    if benchmark in bigger_is_better:
+-        new, old = old, new
+-
+-    if new.avg >= old.avg:
+-        return "%1.4fx worse" % (new.avg/old.avg)
+-    else:
+-        return "%1.4fx better" % (old.avg/new.avg)
+-
+-#FIXME: the printing could use a table class that computes the sizes of the
+-# cells instead of the current hard coded values.
+-def print_data_comparison(datav):
+-    assert len(datav) == 2
+-    old_data = datav[0]
+-    new_data = datav[1]
+-    old_benchmarks = frozenset(old_data.keys())
+-    new_benchmarks = frozenset(new_data.keys())
+-    benchmarks = old_benchmarks.intersection(new_benchmarks)
+-    for benchmark in sorted(benchmarks):
+-        print benchmark
+-        old_benchmark_data = old_data[benchmark]
+-        new_benchmark_data = new_data[benchmark]
+-        old_operating_systems = frozenset(old_benchmark_data.keys())
+-        new_operating_systems = frozenset(new_benchmark_data.keys())
+-        operating_systems = old_operating_systems.intersection(new_operating_systems)
+-        for os in sorted(operating_systems):
+-            old_os_data = old_benchmark_data[os]
+-            new_os_data = new_benchmark_data[os]
+-            if not is_significant(old_os_data, new_os_data):
+-                continue
+-
+-            diff = compute_difference(benchmark, old_os_data, new_os_data)
+-            print '%-33s | %-30s -> %-30s %s' % \
+-                (os, old_os_data, new_os_data, diff)
+-        print
+-
+-def main():
+-    parser = OptionParser(usage='Usage: %prog old_revision new_revision')
+-    options, args = parser.parse_args()
+-    if len(args) != 2:
+-        parser.print_help()
+-        sys.exit(1)
+-
+-    print_data_comparison(get_data_for_revisions(args))
+-
+-if __name__ == '__main__':
+-    main()
+diff --git a/testing/talos/setup.py b/testing/talos/setup.py
+--- a/testing/talos/setup.py
++++ b/testing/talos/setup.py
+@@ -1,55 +1,55 @@
+ import os
+ from setuptools import setup, find_packages
+ 
+ try:
+     here = os.path.dirname(os.path.abspath(__file__))
+-    description = file(os.path.join(here, 'README.txt')).read()
+-except IOError, OSError:
++    description = open(os.path.join(here, 'README.txt')).read()
++except OSError:
+     description = ''
+ 
+ version = "0.0"
+ 
+ with open(os.path.join(here, "requirements.txt")) as f:
+     dependencies = f.read().splitlines()
+ 
+ dependency_links = []
+ 
+ setup(name='talos',
+       version=version,
+-      description="A python performance testing framework that is usable on Windows, Mac and Linux.",
++      description="Performance testing framework for Windows, Mac and Linux.",
+       long_description=description,
+-      classifiers=[], # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
++      classifiers=[],  # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
+       author='Mozilla Foundation',
+       author_email='tools@lists.mozilla.org',
+       url='https://wiki.mozilla.org/Buildbot/Talos',
+       license='MPL',
+       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+       include_package_data=True,
+-      package_data = {'': ['*.config',
+-                           '*.css',
+-                           '*.gif',
+-                           '*.htm',
+-                           '*.html',
+-                           '*.ico',
+-                           '*.js',
+-                           '*.json',
+-                           '*.manifest',
+-                           '*.php',
+-                           '*.png',
+-                           '*.rdf',
+-                           '*.sqlite',
+-                           '*.svg',
+-                           '*.xml',
+-                           '*.xul',
+-                           ]},
++      package_data={'': ['*.config',
++                         '*.css',
++                         '*.gif',
++                         '*.htm',
++                         '*.html',
++                         '*.ico',
++                         '*.js',
++                         '*.json',
++                         '*.manifest',
++                         '*.php',
++                         '*.png',
++                         '*.rdf',
++                         '*.sqlite',
++                         '*.svg',
++                         '*.xml',
++                         '*.xul',
++                         ]},
+       zip_safe=False,
+       install_requires=dependencies,
+       dependency_links=dependency_links,
+       entry_points="""
+       # -*- Entry points: -*-
+       [console_scripts]
+       talos = talos.run_tests:main
+       talos-results = talos.results:main
+       """,
+-      test_suite = "tests"
++      test_suite="tests"
+       )
+diff --git a/testing/talos/talos_from_code.py b/testing/talos/talos_from_code.py
+--- a/testing/talos/talos_from_code.py
++++ b/testing/talos/talos_from_code.py
+@@ -12,110 +12,116 @@
+ from optparse import OptionParser
+ import json
+ import re
+ import urllib2
+ import urlparse
+ import sys
+ import os
+ 
++
+ def main():
+     '''
+     This script downloads a talos.json file which indicates which files to download
+     for a talos job.
+     See a talos.json file for a better understand:
+     http://hg.mozilla.org/mozilla-central/raw-file/default/testing/talos/talos.json
+     '''
+     parser = OptionParser()
+     parser.add_option("--talos-json-url", dest="talos_json_url", type="string",
+                       help="It indicates from where to download the talos.json file.")
+     (options, args) = parser.parse_args()
+ 
+     # 1) check that the url was passed
+-    if options.talos_json_url == None:
+-        print "You need to specify --talos-json-url."
++    if options.talos_json_url is None:
++        print("You need to specify --talos-json-url.")
+         sys.exit(1)
+ 
+     # 2) try to download the talos.json file
+     try:
+         jsonFilename = download_file(options.talos_json_url)
+-    except Exception, e:
+-        print "ERROR: We tried to download the talos.json file but something failed."
+-        print "ERROR: %s" % str(e)
++    except Exception as e:
++        print("ERROR: We tried to download the talos.json file but something failed.")
++        print("ERROR: %s" % str(e))
+         sys.exit(1)
+ 
+     # 3) download the necessary files
+-    print "INFO: talos.json URL: %s" % options.talos_json_url
++    print("INFO: talos.json URL: %s" % options.talos_json_url)
+     try:
+         key = 'talos.zip'
+         entity = get_value(jsonFilename, key)
+         if passesRestrictions(options.talos_json_url, entity["url"]):
+             # the key is at the same time the filename e.g. talos.zip
+-            print "INFO: Downloading %s as %s" % (entity["url"], os.path.join(entity["path"], key))
++            print("INFO: Downloading %s as %s" %
++                  (entity["url"], os.path.join(entity["path"], key)))
+             download_file(entity["url"], entity["path"], key)
+         else:
+-            print "ERROR: You have tried to download a file " + \
+-                  "from: %s " % entity["url"] + \
+-                  "which is a location different than http://talos-bundles.pvt.build.mozilla.org/"
+-            print "ERROR: This is only allowed for the certain branches."
++            print("ERROR: You have tried to download a file " +
++                  "from: %s " % entity["url"] +
++                  "which is a location different than http://talos-bundles.pvt.build.mozilla.org/")
++            print("ERROR: This is only allowed for the certain branches.")
+             sys.exit(1)
+-    except Exception, e:
+-        print "ERROR: %s" % str(e)
++    except Exception as e:
++        print("ERROR: %s" % str(e))
+         sys.exit(1)
+ 
++
+ def passesRestrictions(talosJsonUrl, fileUrl):
+     '''
+     Only certain branches are exempted from having to host their downloadable files
+     in talos-bundles.pvt.build.mozilla.org
+     '''
+     if talosJsonUrl.startswith("http://hg.mozilla.org/try/") or \
+        talosJsonUrl.startswith("https://hg.mozilla.org/try/") or \
+        talosJsonUrl.startswith("http://hg.mozilla.org/projects/pine/") or \
+        talosJsonUrl.startswith("https://hg.mozilla.org/projects/pine/") or \
+        talosJsonUrl.startswith("http://hg.mozilla.org/projects/ash/") or \
+        talosJsonUrl.startswith("https://hg.mozilla.org/projects/ash/"):
+         return True
+     else:
+         p = re.compile('^http://talos-bundles.pvt.build.mozilla.org/')
+         m = p.match(fileUrl)
+-        if m == None:
++        if m is None:
+             return False
+         return True
+ 
++
+ def get_filename_from_url(url):
+     '''
+     This returns the filename of the file we're trying to download
+     '''
+     parsed = urlparse.urlsplit(url.rstrip('/'))
+     if parsed.path != '':
+         return parsed.path.rsplit('/', 1)[-1]
+     else:
+-        print "ERROR: We were trying to download a file from %s " + \
+-              "but the URL seems to be incorrect."
++        print("ERROR: We were trying to download a file from %s " +
++              "but the URL seems to be incorrect.")
+         sys.exit(1)
+ 
++
+ def download_file(url, path="", saveAs=None):
+     '''
+     It downloads a file from URL to the indicated path
+     '''
+     req = urllib2.Request(url)
+     f = urllib2.urlopen(req)
+     if path != "" and not os.path.isdir(path):
+         try:
+             os.makedirs(path)
+-            print "INFO: directory %s created" % path
+-        except Exception, e:
+-            print "ERROR: %s" % str(e)
++            print("INFO: directory %s created" % path)
++        except Exception as e:
++            print("ERROR: %s" % str(e))
+             sys.exit(1)
+     filename = saveAs if saveAs else get_filename_from_url(url)
+     local_file = open(os.path.join(path, filename), 'wb')
+     local_file.write(f.read())
+     local_file.close()
+     return filename
+ 
++
+ def get_value(json_filename, key):
+     '''
+     It loads up a JSON file and returns the value for the given string
+     '''
+     f = open(json_filename, 'r')
+     return json.load(f)[key]
+ 
+ if __name__ == '__main__':
+diff --git a/testing/talos/tests/test_browser_output.py b/testing/talos/tests/test_browser_output.py
+--- a/testing/talos/tests/test_browser_output.py
++++ b/testing/talos/tests/test_browser_output.py
+@@ -8,16 +8,17 @@ import os
+ import unittest
+ 
+ from talos.results import BrowserLogResults
+ from talos.results import PageloaderResults
+ from talos.utils import TalosError
+ 
+ here = os.path.dirname(os.path.abspath(__file__))
+ 
++
+ class TestBrowserOutput(unittest.TestCase):
+ 
+     def test_ts_format(self):
+ 
+         # output file
+         browser_ts = os.path.join(here, 'browser_output.ts.txt')
+ 
+         # parse the results
+@@ -83,17 +84,19 @@ class TestBrowserOutput(unittest.TestCas
+         input = self.start_report() + garbage + self.end_report() + self.end_report()
+         self.compare_error_message(input, "Unmatched number of tokens")
+ 
+     def test_end_report_before_start_report(self):
+         """the end report token occurs before the start report token"""
+ 
+         garbage = "hjksdfhkhasdfjkhsdfkhdfjklasd"
+         input = self.end_report() + garbage + self.start_report()
+-        self.compare_error_message(input, "End token '%s' occurs before start token" % self.end_report())
++        self.compare_error_message(input,
++                                   "End token '%s' occurs before start token" %
++                                   self.end_report())
+ 
+     def test_missing_timestamps(self):
+         """what if the timestamps are missing?"""
+ 
+         # make a bogus report but missing the timestamps
+         garbage = "hjksdfhkhasdfjkhsdfkhdfjklasd"
+         input = self.start_report() + garbage + self.end_report()
+ 
+@@ -103,73 +106,85 @@ class TestBrowserOutput(unittest.TestCas
+     def test_wrong_order(self):
+         """what happens if you mix up the token order?"""
+ 
+         # i've secretly put the AfterTerminationTimestamp before
+         # the BeforeLaunchTimestamp
+         # Let's see if the parser notices
+         bad_report = """__start_report392__end_report
+ 
+-Failed to load native module at path '/home/jhammel/firefox/components/libmozgnome.so': (80004005) libnotify.so.1: cannot open shared object file: No such file or directory
+-Could not read chrome manifest 'file:///home/jhammel/firefox/extensions/%7B972ce4c6-7e08-4474-a285-3208198ce6fd%7D/chrome.manifest'.
+-[JavaScript Warning: "Use of enablePrivilege is deprecated.  Please use code that runs with the system principal (e.g. an extension) instead." {file: "http://localhost:15707/startup_test/startup_test.html?begin=1333663595557" line: 0}]
++Failed to load native module at path '/home/jhammel/firefox/components/libmozgnome.so':
++(80004005) libnotify.so.1: cannot open shared object file: No such file or directory
++Could not read chrome manifest
++'file:///home/jhammel/firefox/extensions/%7B972ce4c6-7e08-4474-a285-3208198ce6fd%7D/chrome.manifest'.
++[JavaScript Warning: "Use of enablePrivilege is deprecated.
++Please use code that runs with the system principal (e.g. an extension) instead.
++" {file: "http://localhost:15707/startup_test/startup_test.html?begin=1333663595557" line: 0}]
+ __startTimestamp1333663595953__endTimestamp
+ __startAfterTerminationTimestamp1333663596551__endAfterTerminationTimestamp
+ __startBeforeLaunchTimestamp1333663595557__endBeforeLaunchTimestamp
+ """
+ 
+-        self.compare_error_message(bad_report, "] found before ('__startBeforeLaunchTimestamp', '__endBeforeLaunchTimestamp') [character position:")
++        self.compare_error_message(bad_report, "] found before " +
++                                   "('__startBeforeLaunchTimestamp', " +
++                                   "'__endBeforeLaunchTimestamp') " +
++                                   "[character position:")
+ 
+     def test_multiple_reports(self):
+         """you're only allowed to have one report in a file"""
+ 
+         # this one works fine
+         good_report = """__start_report392__end_report
+ 
+-Failed to load native module at path '/home/jhammel/firefox/components/libmozgnome.so': (80004005) libnotify.so.1: cannot open shared object file: No such file or directory
+-Could not read chrome manifest 'file:///home/jhammel/firefox/extensions/%7B972ce4c6-7e08-4474-a285-3208198ce6fd%7D/chrome.manifest'.
+-[JavaScript Warning: "Use of enablePrivilege is deprecated.  Please use code that runs with the system principal (e.g. an extension) instead." {file: "http://localhost:15707/startup_test/startup_test.html?begin=1333663595557" line: 0}]
++Failed to load native module at path '/home/jhammel/firefox/components/libmozgnome.so':
++(80004005) libnotify.so.1: cannot open shared object file: No such file or directory
++Could not read chrome manifest
++'file:///home/jhammel/firefox/extensions/%7B972ce4c6-7e08-4474-a285-3208198ce6fd%7D/chrome.manifest'.
++[JavaScript Warning: "Use of enablePrivilege is deprecated.
++Please use code that runs with the system principal (e.g. an extension) instead.
++" {file: "http://localhost:15707/startup_test/startup_test.html?begin=1333663595557" line: 0}]
+ __startTimestamp1333663595953__endTimestamp
+ __startBeforeLaunchTimestamp1333663595557__endBeforeLaunchTimestamp
+ __startAfterTerminationTimestamp1333663596551__endAfterTerminationTimestamp
+ """
+ 
+-        b = BrowserLogResults(results_raw=good_report)
++        # but there's no hope for this one
++        bad_report = good_report + good_report  # interesting math
+ 
+-        # but there's no hope for this one
+-        bad_report = good_report + good_report # interesting math
+-
+-        self.compare_error_message(bad_report, "Multiple matches for %s,%s" % (self.start_report(), self.end_report()))
++        self.compare_error_message(bad_report, "Multiple matches for %s,%s" %
++                                   (self.start_report(), self.end_report()))
+ 
+     def start_report(self):
+         """return a start report token"""
+-        return BrowserLogResults.report_tokens[0][1][0] # start token
++        return BrowserLogResults.report_tokens[0][1][0]  # start token
+ 
+     def end_report(self):
+         """return a start report token"""
+-        return BrowserLogResults.report_tokens[0][1][-1] # end token
++        return BrowserLogResults.report_tokens[0][1][-1]  # end token
+ 
+     def compare_error_message(self, browser_log, substr):
+         """
+         ensures that exceptions give correct error messages
+         - browser_log : a browser log file
+         - substr : substring of the error message
+         """
+ 
+-        error = None
+         try:
+             BrowserLogResults(results_raw=browser_log)
+-        except TalosError, e:
++        except TalosError as e:
+             if substr not in str(e):
+-                import pdb; pdb.set_trace()
++                import pdb
++                pdb.set_trace()
+             self.assertTrue(substr in str(e))
++
++
+ class TestTalosError(unittest.TestCase):
+     """
+     test TalosError class
+     """
+     def test_browser_log_results(self):
+-        #an example that should fail
+-        #passing invalid value for argument result_raw
++        # an example that should fail
++        # passing invalid value for argument result_raw
+         with self.assertRaises(TalosError):
+-            BrowserLogResults(results_raw = "__FAIL<bad test>__FAIL")
++            BrowserLogResults(results_raw="__FAIL<bad test>__FAIL")
+ 
+ if __name__ == '__main__':
+     unittest.main()
+diff --git a/testing/talos/tests/test_filter.py b/testing/talos/tests/test_filter.py
+--- a/testing/talos/tests/test_filter.py
++++ b/testing/talos/tests/test_filter.py
+@@ -7,17 +7,17 @@ http://hg.mozilla.org/build/talos/file/t
+ """
+ 
+ import unittest
+ import talos.filter
+ 
+ 
+ class TestFilter(unittest.TestCase):
+ 
+-    data = range(30) # test data
++    data = range(30)  # test data
+ 
+     def test_ignore(self):
+         """test the ignore filter"""
+         # a bit of a stub sanity test for a single filter
+ 
+         filtered = talos.filter.ignore_first(self.data)
+         self.assertEquals(filtered, self.data[1:])
+ 
+@@ -58,17 +58,17 @@ class TestFilter(unittest.TestCase):
+ 
+         # an example with several arguments
+ 
+         # temporarily add foo
+         # value is lambda function to mimic filter_dict key:value pair
+         talos.filter.scalar_filters['foo'] = lambda *args: args
+         parsed = talos.filter.parse('foo:10.1,2,5.0,6.')
+         self.assertEquals(parsed, ['foo', [10.1, 2, 5.0, 6.0]])
+-        for index in (2,3):
++        for index in (2, 3):
+             self.assertEquals(type(parsed[1][index]), float)
+             self.assertNotEqual(type(parsed[1][index]), int)
+ 
+         # an example that should fail
+         self.assertRaises(ValueError, talos.filter.parse, 'foo:bar')
+         self.assertRaises(ValueError, talos.filter.parse, 'foo:1,')
+ 
+         # delete foo again
+diff --git a/testing/talos/tests/test_results.py b/testing/talos/tests/test_results.py
+--- a/testing/talos/tests/test_results.py
++++ b/testing/talos/tests/test_results.py
+@@ -5,16 +5,20 @@
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
+ """
+ test talos results parsing
+ 
+ http://hg.mozilla.org/build/talos/file/tip/talos/results.py
+ """
+ 
++import unittest
++import talos.filter
++import talos.results
++
+ # example page load test results string
+ results_string = """_x_x_mozilla_page_load
+ _x_x_mozilla_page_load_details
+ |i|pagename|runs|
+ |0;gearflowers.svg;74;65;68;66;62
+ |1;composite-scale.svg;43;44;35;41;41
+ |2;composite-scale-opacity.svg;19;16;19;19;21
+ |3;composite-scale-rotate.svg;18;19;20;20;19
+@@ -23,51 +27,44 @@ results_string = """_x_x_mozilla_page_lo
+ |6;hixie-002.xml;53940;15057;38246;55323;31818
+ |7;hixie-003.xml;5027;5026;13540;31503;5031
+ |8;hixie-004.xml;5050;5054;5053;5054;5055
+ |9;hixie-005.xml;4568;4569;4562;4545;4567
+ |10;hixie-006.xml;5090;5165;5054;5015;5077
+ |11;hixie-007.xml;1628;1623;1623;1617;1622
+ """
+ 
+-import unittest
+-import talos.filter
+-import talos.results
+ 
+ class TestPageloaderResults(unittest.TestCase):
+ 
+     def test_parsing(self):
+         """test our ability to parse results data"""
+         results = talos.results.PageloaderResults(results_string)
+ 
+         # ensure you got all of them
+         self.assertEqual(len(results.results), 12)
+ 
+         # test the indices
+         indices = [i['index'] for i in results.results]
+         self.assertEqual(indices, range(12))
+ 
+         # test some pages
+         pages = [i['page'] for i in results.results]
+-        comparison = ['hixie-00%d.xml' % i for i in range(1,8)]
++        comparison = ['hixie-00%d.xml' % i for i in range(1, 8)]
+         self.assertEqual(pages[-len(comparison):], comparison)
+ 
+         # test a few values
+         last = [1628., 1623., 1623, 1617., 1622.]
+         self.assertEqual(results.results[-1]['runs'], last)
+         first = [74., 65., 68., 66., 62.]
+         self.assertEqual(results.results[0]['runs'], first)
+ 
+     def test_filter(self):
+         """test PageloaderResults.filter function"""
+ 
+-        # sample data
+-        first = [74., 65., 68., 66., 62.]
+-        last = [1628., 1623., 1623, 1617., 1622.]
+-
+         # parse the data
+         results = talos.results.PageloaderResults(results_string)
+ 
+         # apply some filters
+         filters = [[talos.filter.ignore_first, [2]], [talos.filter.median]]
+         filtered = results.filter(*filters)
+         self.assertEqual(filtered[0][0], 66.)
+         self.assertEqual(filtered[-1][0], 1622.)
+diff --git a/testing/talos/tests/test_talosconfig.py b/testing/talos/tests/test_talosconfig.py
+--- a/testing/talos/tests/test_talosconfig.py
++++ b/testing/talos/tests/test_talosconfig.py
+@@ -1,19 +1,35 @@
+ from talos import talosconfig
+ from talos.configuration import YAML
+ import unittest
+ import json
+ 
+ 
+-#globals
++# globals
+ ffox_path = 'test/path/to/firefox'
+-command_args = [ffox_path, '-profile', 'pathtoprofile', '-tp', 'pathtotpmanifest', '-tpchrome', '-tpmozafterpaint', '-tpnoisy', '-rss', '-tpcycles', '1', '-tppagecycles', '1']
+-browser_config = {'deviceroot': '', 'dirs': {}, 'repository': 'http://hg.mozilla.org/releases/mozilla-release', 'buildid': '20131205075310', 'results_log': 'pathtoresults_log', 'symbols_path': None, 'bcontroller_config': 'pathtobcontroller', 'host': '', 'browser_name': 'Firefox', 'sourcestamp': '39faf812aaec', 'remote': False, 'child_process': 'plugin-container', 'branch_name': '', 'browser_version': '26.0', 'extra_args': '', 'develop': True, 'preferences': {'browser.display.overlaynavbuttons': False, 'extensions.getAddons.get.url': 'http://127.0.0.1/extensions-dummy/repositoryGetURL', 'dom.max_chrome_script_run_time': 0, 'network.proxy.type': 1, 'extensions.update.background.url': 'http://127.0.0.1/extensions-dummy/updateBackgroundURL', 'network.proxy.http': 'localhost', 'plugins.update.url': 'http://127.0.0.1/plugins-dummy/updateCheckURL', 'dom.max_script_run_time': 0, 'extensions.update.enabled': False, 'browser.safebrowsing.keyURL': 'http://127.0.0.1/safebrowsing-dummy/newkey', 'media.navigator.permission.disabled': True, 'app.update.enabled': False, 'extensions.blocklist.url': 'http://127.0.0.1/extensions-dummy/blocklistURL', 'browser.EULA.override': True, 'extensions.checkCompatibility': False, 'talos.logfile': 'pathtofile', 'browser.safebrowsing.gethashURL': 'http://127.0.0.1/safebrowsing-dummy/gethash', 'extensions.hotfix.url': 'http://127.0.0.1/extensions-dummy/hotfixURL', 'dom.disable_window_move_resize': True, 'network.proxy.http_port': 80, 'browser.dom.window.dump.enabled': True, 'extensions.update.url': 'http://127.0.0.1/extensions-dummy/updateURL', 'browser.chrome.dynamictoolbar': False,  'browser.link.open_newwindow': 2, 'extensions.getAddons.search.url': 'http://127.0.0.1/extensions-dummy/repositorySearchURL', 'browser.cache.disk.smart_size.first_run': False, 'security.turn_off_all_security_so_that_viruses_can_take_over_this_computer': True, 'dom.disable_open_during_load': False, 'extensions.getAddons.search.browseURL': 'http://127.0.0.1/extensions-dummy/repositoryBrowseURL', 'browser.cache.disk.smart_size.enabled': False, 'extensions.getAddons.getWithPerformance.url': 'http://127.0.0.1/extensions-dummy/repositoryGetWithPerformanceURL', 'hangmonitor.timeout': 0, 'extensions.getAddons.maxResults': 0, 'dom.send_after_paint_to_content': True, 'security.fileuri.strict_origin_policy': False, 'media.capturestream_hints.enabled': True, 'extensions.update.notifyUser': False, 'extensions.blocklist.enabled': False, 'browser.bookmarks.max_backups': 0, 'browser.shell.checkDefaultBrowser': False, 'media.peerconnection.enabled': True, 'dom.disable_window_flip': True, 'security.enable_java': False, 'browser.warnOnQuit': False, 'media.navigator.enabled': True, 'browser.safebrowsing.updateURL': 'http://127.0.0.1/safebrowsing-dummy/update', 'dom.allow_scripts_to_close_windows': True, 'extensions.webservice.discoverURL': 'http://127.0.0.1/extensions-dummy/discoveryURL'}, 'test_timeout': 1200, 'title': 'qm-pxp01', 'error_filename': 'pathtoerrorfile', 'webserver': 'localhost:15707', 'browser_path':ffox_path, 'port': 20701, 'browser_log': 'browser_output.txt', 'process': 'firefox.exe', 'xperf_path': 'C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe', 'extensions': ['pathtopageloader'], 'fennecIDs': '', 'env': {'NO_EM_RESTART': '1'}, 'init_url': 'http://localhost:15707/getInfo.html', 'browser_wait': 5}
+-test_config = {'remote_counters': [], 'filters': [['ignore_first', [5]], ['median', []]], 'xperf_user_providers': ['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'], 'tpcycles': 1, 'browser_log': 'browser_output.txt', 'shutdown': False, 'fennecIDs': False, 'responsiveness': False, 'tpmozafterpaint': True, 'cleanup': 'pathtofile', 'tprender': False, 'xperf_counters': ['main_startup_fileio', 'main_startup_netio', 'main_normal_fileio', 'main_normal_netio', 'nonmain_startup_fileio', 'nonmain_normal_fileio', 'nonmain_normal_netio', 'mainthread_readcount', 'mainthread_readbytes', 'mainthread_writecount', 'mainthread_writebytes'], 'mac_counters': [], 'tpnoisy': True, 'tppagecycles': 1, 'tploadaboutblank': False, 'xperf_providers': ['PROC_THREAD', 'LOADER', 'HARD_FAULTS', 'FILENAME', 'FILE_IO', 'FILE_IO_INIT'], 'rss': True, 'profile_path': 'path', 'name': 'tp5n', 'url': '-tp pathtotp5n.manifest -tpchrome -tpmozafterpaint -tpnoisy -rss -tpcycles 1 -tppagecycles 1', 'setup': 'pathtosetup', 'linux_counters': [], 'tpmanifest': 'pathtotp5n.manifest', 'w7_counters': [], 'timeout': 1800, 'xperf_stackwalk': ['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'], 'win_counters': [], 'cycles': 1, 'resolution': 20, 'tpchrome': True}
++command_args = [ffox_path,
++                '-profile',
++                'pathtoprofile',
++                '-tp',
++                'pathtotpmanifest',
++                '-tpchrome',
++                '-tpmozafterpaint',
++                '-tpnoisy',
++                '-rss',
++                '-tpcycles',
++                '1',
++                '-tppagecycles',
++                '1']
++with open("test_talosconfig_browser_config.json") as json_browser_config:
++    browser_config = json.load(json_browser_config)
++    json_browser_config.close()
++with open("test_talosconfig_test_config.json") as json_test_config:
++    test_config = json.load(json_test_config)
++    json_test_config.close()
+ 
+ 
+ class TestWriteConfig(unittest.TestCase):
+     def test_writeConfigFile(self):
+         obj = dict(some=123, thing='456', other=789)
+ 
+         self.assertEquals(
+             json.loads(talosconfig.writeConfigFile(obj, ('some', 'thing'))),
+@@ -27,93 +43,115 @@ class TestWriteConfig(unittest.TestCase)
+         )
+ 
+ 
+ class TalosConfigUnitTest(unittest.TestCase):
+     """
+     A class inheriting from unittest.TestCase to test the generateTalosConfig function.
+     """
+ 
+-    def validate(self,var1, var2):
+-        # Function to check whether the output generated is correct or not. If the output generated is not correct then specify the expected output to be generated.
++    def validate(self, var1, var2):
++        # Function to check whether the output generated is correct or not.
++        # If the output generated is not correct then specify the expected output to be generated.
+         if var1 == var2:
+             return 1
+         else:
+-            print "input '%s' != expected '%s'"%(var1,var2)
++            print("input '%s' != expected '%s'" % (var1, var2))
+ 
+     def test_talosconfig(self):
+-        # This function stimulates a call to generateTalosConfig in talosconfig.py . It is then tested whether the output generated is correct or not.
+-
+-        browser_config_copy = browser_config.copy()
+-        test_config_copy = test_config.copy()
+-        test = talosconfig.generateTalosConfig(command_args, browser_config_copy, test_config_copy)
+-
++        # This function stimulates a call to generateTalosConfig in talosconfig.py .
++        # It is then tested whether the output generated is correct or not.
+         # ensure that the output generated in yaml file is as expected or not.
+         yaml = YAML()
+         content = yaml.read(browser_config['bcontroller_config'])
+-        self.validate(content['command'],"test/path/to/firefox -profile pathtoprofile -tp pathtotpmanifest -tpchrome -tpmozafterpaint -tpnoisy -rss -tpcycles 1 -tppagecycles 1")
+-        self.validate(content['child_process'],"plugin-container")
+-        self.validate(content['process'],"firefox.exe")
+-        self.validate(content['browser_wait'],5)
+-        self.validate(content['test_timeout'],1200)
+-        self.validate(content['browser_log'],"browser_output.txt")
+-        self.validate(content['browser_path'],"test/path/to/firefox")
+-        self.validate(content['error_filename'],"pathtoerrorfile")
+-        self.validate(content['xperf_path'],"C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe")
+-        self.validate(content['buildid'],20131205075310L)
+-        self.validate(content['sourcestamp'],"39faf812aaec")
+-        self.validate(content['repository'],"http://hg.mozilla.org/releases/mozilla-release")
+-        self.validate(content['title'],"qm-pxp01")
+-        self.validate(content['testname'],"tp5n")
+-        self.validate(content['xperf_providers'],['PROC_THREAD', 'LOADER', 'HARD_FAULTS', 'FILENAME', 'FILE_IO', 'FILE_IO_INIT'])
+-        self.validate(content['xperf_user_providers'],['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'])
+-        self.validate(content['xperf_stackwalk'],['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'])
+-        self.validate(content['processID'],"None")
+-        self.validate(content['approot'],"test/path/to")
++        self.validate(content['command'],
++                      "test/path/to/firefox " +
++                      "-profile " +
++                      "pathtoprofile " +
++                      "-tp " +
++                      "pathtotpmanifest " +
++                      "-tpchrome " +
++                      "-tpmozafterpaint " +
++                      "-tpnoisy " +
++                      "-rss " +
++                      "-tpcycles " +
++                      "1 " +
++                      "-tppagecycles " +
++                      "1")
++        self.validate(content['child_process'], "plugin-container")
++        self.validate(content['process'], "firefox.exe")
++        self.validate(content['browser_wait'], 5)
++        self.validate(content['test_timeout'], 1200)
++        self.validate(content['browser_log'], "browser_output.txt")
++        self.validate(content['browser_path'], "test/path/to/firefox")
++        self.validate(content['error_filename'], "pathtoerrorfile")
++        self.validate(content['xperf_path'],
++                      "C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe")
++        self.validate(content['buildid'], 20131205075310)
++        self.validate(content['sourcestamp'], "39faf812aaec")
++        self.validate(content['repository'], "http://hg.mozilla.org/releases/mozilla-release")
++        self.validate(content['title'], "qm-pxp01")
++        self.validate(content['testname'], "tp5n")
++        self.validate(content['xperf_providers'], ['PROC_THREAD',
++                                                   'LOADER',
++                                                   'HARD_FAULTS',
++                                                   'FILENAME',
++                                                   'FILE_IO',
++                                                   'FILE_IO_INIT'])
++        self.validate(content['xperf_user_providers'],
++                      ['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'])
++        self.validate(content['xperf_stackwalk'],
++                      ['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'])
++        self.validate(content['processID'], "None")
++        self.validate(content['approot'], "test/path/to")
+ 
+     def test_errors(self):
+         # Tests if errors are correctly raised.
+ 
+         # Testing that error is correctly raised or not if xperf_path is missing
+         browser_config_copy = browser_config.copy()
+         test_config_copy = test_config.copy()
+         del browser_config_copy['xperf_path']
+         talosconfig.generateTalosConfig(command_args, browser_config_copy, test_config_copy)
+         yaml = YAML()
+         content = yaml.read(browser_config['bcontroller_config'])
+ 
+         with self.assertRaises(KeyError):
+-            self.validate(content['xperf_path'],"C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe")
++            self.validate(content['xperf_path'],
++                          "C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe")
+ 
+         # Test to see if keyerror is raised or not for calling testname when xperf_path is missing
+         with self.assertRaises(KeyError):
+-            self.validate(content['testname'],"tp5n")
++            self.validate(content['testname'], "tp5n")
+ 
+         # Testing that error is correctly raised or not if xperf_providers is missing
+         browser_config_copy = browser_config.copy()
+         test_config_copy = test_config.copy()
+         del test_config_copy['xperf_providers']
+         talosconfig.generateTalosConfig(command_args, browser_config_copy, test_config_copy)
+         yaml = YAML()
+         content = yaml.read(browser_config['bcontroller_config'])
+ 
+-        # Test to see if keyerror is raised or not when calling xperf_providers
++        # Checking keyerror when calling xperf_providers
+         with self.assertRaises(KeyError):
+-            self.validate(content['xperf_providers'],['PROC_THREAD', 'LOADER', 'HARD_FAULTS', 'FILENAME', 'FILE_IO', 'FILE_IO_INIT'])
++            self.validate(content['xperf_providers'], ['PROC_THREAD', 'LOADER', 'HARD_FAULTS',
++                                                       'FILENAME', 'FILE_IO', 'FILE_IO_INIT'])
+ 
+-        # Test to see if keyerror is raised or not when calling xperf_user_providers when xperf_providers is missing
++        # Checking keyerror when calling xperf_user_providers when xperf_providers is missing
+         with self.assertRaises(KeyError):
+-            self.validate(content['xperf_user_providers'],['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'])
++            self.validate(content['xperf_user_providers'],
++                          ['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'])
+ 
+-        # Test to see if keyerror is raised or not when calling xperf_stackwalk when xperf_providers is missing
++        # Checking keyerror when calling xperf_stackwalk when xperf_providers is missing
+         with self.assertRaises(KeyError):
+-            self.validate(content['xperf_stackwalk'],['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'])
++            self.validate(content['xperf_stackwalk'],
++                          ['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'])
+ 
+-        # Test to see if keyerror is raised or not when calling processID when xperf_providers is missing
++        # Checking keyerror when calling processID when xperf_providers is missing
+         with self.assertRaises(KeyError):
+-            self.validate(content['processID'],"None")
++            self.validate(content['processID'], "None")
+ 
+-        # Test to see if keyerror is raised or not when calling approot when xperf_providers is missing
++        # Checking keyerror when calling approot when xperf_providers is missing
+         with self.assertRaises(KeyError):
+-            self.validate(content['approot'],"test/path/to")
++            self.validate(content['approot'], "test/path/to")
+ 
+ if __name__ == '__main__':
+     unittest.main()
+diff --git a/testing/talos/tests/test_talosconfig_browser_config.json b/testing/talos/tests/test_talosconfig_browser_config.json
+new file mode 100644
+--- /dev/null
++++ b/testing/talos/tests/test_talosconfig_browser_config.json
+@@ -0,0 +1,1 @@
++{'deviceroot': '', 'dirs': {}, 'repository': 'http://hg.mozilla.org/releases/mozilla-release', 'buildid': '20131205075310', 'results_log': 'pathtoresults_log', 'symbols_path': None, 'bcontroller_config': 'pathtobcontroller', 'host': '', 'browser_name': 'Firefox', 'sourcestamp': '39faf812aaec', 'remote': False, 'child_process': 'plugin-container', 'branch_name': '', 'browser_version': '26.0', 'extra_args': '', 'develop': True, 'preferences': {'browser.display.overlaynavbuttons': False, 'extensions.getAddons.get.url': 'http://127.0.0.1/extensions-dummy/repositoryGetURL', 'dom.max_chrome_script_run_time': 0, 'network.proxy.type': 1, 'extensions.update.background.url': 'http://127.0.0.1/extensions-dummy/updateBackgroundURL', 'network.proxy.http': 'localhost', 'plugins.update.url': 'http://127.0.0.1/plugins-dummy/updateCheckURL', 'dom.max_script_run_time': 0, 'extensions.update.enabled': False, 'browser.safebrowsing.keyURL': 'http://127.0.0.1/safebrowsing-dummy/newkey', 'media.navigator.permission.disabled': True, 'app.update.enabled': False, 'extensions.blocklist.url': 'http://127.0.0.1/extensions-dummy/blocklistURL', 'browser.EULA.override': True, 'extensions.checkCompatibility': False, 'talos.logfile': 'pathtofile', 'browser.safebrowsing.gethashURL': 'http://127.0.0.1/safebrowsing-dummy/gethash', 'extensions.hotfix.url': 'http://127.0.0.1/extensions-dummy/hotfixURL', 'dom.disable_window_move_resize': True, 'network.proxy.http_port': 80, 'browser.dom.window.dump.enabled': True, 'extensions.update.url': 'http://127.0.0.1/extensions-dummy/updateURL', 'browser.chrome.dynamictoolbar': False,  'browser.link.open_newwindow': 2, 'extensions.getAddons.search.url': 'http://127.0.0.1/extensions-dummy/repositorySearchURL', 'browser.cache.disk.smart_size.first_run': False, 'security.turn_off_all_security_so_that_viruses_can_take_over_this_computer': True, 'dom.disable_open_during_load': False, 'extensions.getAddons.search.browseURL': 'http://127.0.0.1/extensions-dummy/repositoryBrowseURL', 'browser.cache.disk.smart_size.enabled': False, 'extensions.getAddons.getWithPerformance.url': 'http://127.0.0.1/extensions-dummy/repositoryGetWithPerformanceURL', 'hangmonitor.timeout': 0, 'extensions.getAddons.maxResults': 0, 'dom.send_after_paint_to_content': True, 'security.fileuri.strict_origin_policy': False, 'media.capturestream_hints.enabled': True, 'extensions.update.notifyUser': False, 'extensions.blocklist.enabled': False, 'browser.bookmarks.max_backups': 0, 'browser.shell.checkDefaultBrowser': False, 'media.peerconnection.enabled': True, 'dom.disable_window_flip': True, 'security.enable_java': False, 'browser.warnOnQuit': False, 'media.navigator.enabled': True, 'browser.safebrowsing.updateURL': 'http://127.0.0.1/safebrowsing-dummy/update', 'dom.allow_scripts_to_close_windows': True, 'extensions.webservice.discoverURL': 'http://127.0.0.1/extensions-dummy/discoveryURL'}, 'test_timeout': 1200, 'title': 'qm-pxp01', 'error_filename': 'pathtoerrorfile', 'webserver': 'localhost:15707', 'browser_path':ffox_path, 'port': 20701, 'browser_log': 'browser_output.txt', 'process': 'firefox.exe', 'xperf_path': 'C:/Program Files/Microsoft Windows Performance Toolkit/xperf.exe', 'extensions': ['pathtopageloader'], 'fennecIDs': '', 'env': {'NO_EM_RESTART': '1'}, 'init_url': 'http://localhost:15707/getInfo.html', 'browser_wait': 5}
+\ No newline at end of file
+diff --git a/testing/talos/tests/test_talosconfig_test_config.json b/testing/talos/tests/test_talosconfig_test_config.json
+new file mode 100644
+--- /dev/null
++++ b/testing/talos/tests/test_talosconfig_test_config.json
+@@ -0,0 +1,1 @@
++{'remote_counters': [], 'filters': [['ignore_first', [5]], ['median', []]], 'xperf_user_providers': ['Mozilla Generic Provider', 'Microsoft-Windows-TCPIP'], 'tpcycles': 1, 'browser_log': 'browser_output.txt', 'shutdown': False, 'fennecIDs': False, 'responsiveness': False, 'tpmozafterpaint': True, 'cleanup': 'pathtofile', 'tprender': False, 'xperf_counters': ['main_startup_fileio', 'main_startup_netio', 'main_normal_fileio', 'main_normal_netio', 'nonmain_startup_fileio', 'nonmain_normal_fileio', 'nonmain_normal_netio', 'mainthread_readcount', 'mainthread_readbytes', 'mainthread_writecount', 'mainthread_writebytes'], 'mac_counters': [], 'tpnoisy': True, 'tppagecycles': 1, 'tploadaboutblank': False, 'xperf_providers': ['PROC_THREAD', 'LOADER', 'HARD_FAULTS', 'FILENAME', 'FILE_IO', 'FILE_IO_INIT'], 'rss': True, 'profile_path': 'path', 'name': 'tp5n', 'url': '-tp pathtotp5n.manifest -tpchrome -tpmozafterpaint -tpnoisy -rss -tpcycles 1 -tppagecycles 1', 'setup': 'pathtosetup', 'linux_counters': [], 'tpmanifest': 'pathtotp5n.manifest', 'w7_counters': [], 'timeout': 1800, 'xperf_stackwalk': ['FileCreate', 'FileRead', 'FileWrite', 'FileFlush', 'FileClose'], 'win_counters': [], 'cycles': 1, 'resolution': 20, 'tpchrome': True}
+\ No newline at end of file
+diff --git a/testing/talos/tests/test_urlsplit.py b/testing/talos/tests/test_urlsplit.py
+--- a/testing/talos/tests/test_urlsplit.py
++++ b/testing/talos/tests/test_urlsplit.py
+@@ -7,16 +7,17 @@
+ """
+ test URL parsing; see
+ https://bugzilla.mozilla.org/show_bug.cgi?id=793875
+ """
+ 
+ import unittest
+ import talos.utils
+ 
++
+ class TestURLParsing(unittest.TestCase):
+ 
+     def test_http_url(self):
+         """test parsing an HTTP URL"""
+ 
+         url = 'https://www.mozilla.org/en-US/about/'
+         parsed = talos.utils.urlsplit(url)
+         self.assertEqual(parsed,
+@@ -26,17 +27,16 @@ class TestURLParsing(unittest.TestCase):
+         """test parsing file:// URLs"""
+ 
+         # unix-like file path
+         url = 'file:///foo/bar'
+         parsed = talos.utils.urlsplit(url)
+         self.assertEqual(parsed,
+                          ['file', '', '/foo/bar', '', ''])
+ 
+-
+         # windows-like file path
+         url = r'file://c:\foo\bar'
+         parsed = talos.utils.urlsplit(url)
+         self.assertEqual(parsed,
+                          ['file', '', r'c:\foo\bar', '', ''])
+ 
+     def test_implicit_file_url(self):
+         """
+diff --git a/testing/talos/tests/test_utils.py b/testing/talos/tests/test_utils.py
+--- a/testing/talos/tests/test_utils.py
++++ b/testing/talos/tests/test_utils.py
+@@ -1,11 +1,10 @@
+ from talos import utils
+ import unittest
+-import time
+ import os
+ 
+ 
+ class TestTimer(unittest.TestCase):
+     def test_timer(self):
+         timer = utils.Timer()
+         timer._start_time -= 3  # remove three seconds for the test
+         self.assertEquals(timer.elapsed(), '00:00:03')
+@@ -20,20 +19,19 @@ class TestRestoreEnv(unittest.TestCase):
+         self.assertNotIn(env_var, os.environ)
+ 
+ 
+ class TestInterpolate(unittest.TestCase):
+     def test_interpolate_talos_is_always_defines(self):
+         self.assertEquals(utils.interpolate('${talos}'), utils.here)
+ 
+     def test_interpolate_custom_placeholders(self):
+-        self.assertEquals(
+-        utils.interpolate('${talos} ${foo} abc', foo='bar', unused=1),
+-        utils.here + ' bar abc'
+-    )
++        self.assertEquals(utils.interpolate('${talos} ${foo} abc', foo='bar', unused=1),
++                          utils.here + ' bar abc')
++
+ 
+ class TestParsePref(unittest.TestCase):
+     def test_parse_string(self):
+         self.assertEquals(utils.parse_pref('abc'), 'abc')
+ 
+     def test_parse_int(self):
+         self.assertEquals(utils.parse_pref('12'), 12)
+ 
+diff --git a/testing/talos/tests/test_xrestop.py b/testing/talos/tests/test_xrestop.py
+--- a/testing/talos/tests/test_xrestop.py
++++ b/testing/talos/tests/test_xrestop.py
+@@ -1,54 +1,55 @@
+ #!/usr/bin/env python
+ 
+ """
+ Tests for talos.xrestop
+ """
+ 
+ import os
+ import subprocess
+-import sys
+ import unittest
+ from talos.cmanager_linux import xrestop
+ 
+ here = os.path.dirname(os.path.abspath(__file__))
+ xrestop_output = os.path.join(here, 'xrestop_output.txt')
+ 
++
+ class TestXrestop(unittest.TestCase):
+ 
+     def test_parsing(self):
+         """test parsing xrestop output from xrestop_output.txt"""
+ 
+         class MockPopen(object):
+             """
+             stub class for subprocess.Popen
+             We mock this to return a local static copy of xrestop output
+             This has the unfortunate nature of depending on implementation
+             details.
+             """
+             def __init__(self, *args, **kwargs):
+                 self.returncode = 0
++
+             def communicate(self):
+-                stdout = file(xrestop_output).read()
++                stdout = open(xrestop_output).read()
+                 return stdout, ''
+ 
+         # monkey-patch subprocess.Popen
+         Popen = subprocess.Popen
+         subprocess.Popen = MockPopen
+ 
+         # get the output
+         output = xrestop()
+ 
+         # ensure that the parsed output is equal to what is in
+         # xrestop_output.txt
+-        self.assertEqual(len(output), 7) # seven windows with PIDs
++        self.assertEqual(len(output), 7)  # seven windows with PIDs
+ 
+         # the first window is Thunderbird
+-        pid = 2035 # thundrbird's pid
++        pid = 2035  # thundrbird's pid
+         self.assertTrue(pid in output)
+         thunderbird = output[pid]
+         self.assertEqual(thunderbird['index'], 0)
+         self.assertEqual(thunderbird['total bytes'], '~4728761')
+ 
+         # PID=1668 is a Terminal
+         pid = 1668
+         self.assertTrue(pid in output)
+diff --git a/tools/lint/flake8.lint b/tools/lint/flake8.lint
+--- a/tools/lint/flake8.lint
++++ b/tools/lint/flake8.lint
+@@ -121,14 +121,14 @@ def lint(files, **lintargs):
+ LINTER = {
+     'name': "flake8",
+     'description': "Python linter",
+     'include': [
+         'python/mozlint',
+         'tools/lint',
+         'taskcluster',
+         'testing/marionette/client',
+-        'testing/talos/talos',
++        'testing/talos/',
+     ],
+     'exclude': [],
+     'type': 'external',
+     'payload': lint,
+ }
