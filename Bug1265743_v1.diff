@@ -1,0 +1,31 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1469815738 -19800
+#      Fri Jul 29 23:38:58 2016 +0530
+# Branch Bug1265743
+# Node ID db4ae4231ef03e7ad91816320f3c522149aaee31
+# Parent  1d1cd045414a2991e2035f39eb029462bb8d5304
+Bug 1265743 - mach talos-test uses --setPref instead of --setpref (inconsistent with all other mach commands) r?jmaher
+
+diff --git a/testing/talos/talos/cmdline.py b/testing/talos/talos/cmdline.py
+--- a/testing/talos/talos/cmdline.py
++++ b/testing/talos/talos/cmdline.py
+@@ -99,17 +99,17 @@ def create_parser(mach_interface=False):
+     add_arg('--test_timeout', type=int, default=1200,
+             help="Time to wait for the browser to output to the log file")
+     add_arg('--errorFile', dest='error_filename',
+             default=os.path.abspath('browser_failures.txt'),
+             help="Filename to store the errors found during the test."
+                  " Currently used for xperf only.")
+     add_arg('--noShutdown', dest='shutdown', action='store_true',
+             help="Record time browser takes to shutdown after testing")
+-    add_arg('--setPref', action='append', default=[], dest="extraPrefs",
++    add_arg('--setpref', action='append', default=[], dest="extraPrefs",
+             metavar="PREF=VALUE",
+             help="defines an extra user preference")
+     add_arg('--webServer', dest='webserver',
+             help="DEPRECATED")
+     if not mach_interface:
+         add_arg('--develop', action='store_true', default=False,
+                 help="useful for running tests on a developer machine."
+                      " Doesn't upload to the graph servers.")
