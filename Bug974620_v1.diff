@@ -1,0 +1,31 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1468819820 -19800
+#      Mon Jul 18 11:00:20 2016 +0530
+# Branch Bug974620
+# Node ID ec4ba9b8c856a45d3f098492af07e904775dd033
+# Parent  8474301676bf79d87f1e1e3ba07a436bf4fcec1d
+Bug 974620 - tcanvasmark wastes time waiting after each scene. r?jmaher
+
+diff --git a/testing/talos/talos/tests/canvasmark/scripts/canvasmark_v6.js b/testing/talos/talos/tests/canvasmark/scripts/canvasmark_v6.js
+--- a/testing/talos/talos/tests/canvasmark/scripts/canvasmark_v6.js
++++ b/testing/talos/talos/tests/canvasmark/scripts/canvasmark_v6.js
+@@ -449,17 +449,17 @@ window.requestAnimFrame = (function()
+       },
+       
+       onKeyUpHandler: function onKeyUpHandler(keyCode)
+       {
+       },
+       
+       isComplete: function isComplete()
+       {
+-         return this.sceneCompletedTime && (Date.now() - this.sceneCompletedTime > 2000);
++         return this.sceneCompletedTime && (Date.now() > this.sceneCompletedTime);
+       },
+       
+       intervalRenderer: function intervalRenderer(interval, ctx)
+       {
+          if (interval.framecounter++ < 100)
+          {
+             Game.centerFillText(ctx, interval.label, "14pt Courier New", GameHandler.height/2 - 8, "white");
+          }
