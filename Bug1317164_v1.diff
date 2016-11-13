@@ -1,0 +1,49 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1479064126 -19800
+#      Mon Nov 14 00:38:46 2016 +0530
+# Branch test_1
+# Node ID 1f5cfd48e060117cc66494dd77680f7439588c53
+# Parent  e5a9fba15b3a91fd7e6de056e9c48567e736f304
+Bug 1317164 - Fix browser_967000_button_sync to run multiple times in a single session
+
+diff --git a/browser/components/customizableui/test/browser_967000_button_sync.js b/browser/components/customizableui/test/browser_967000_button_sync.js
+--- a/browser/components/customizableui/test/browser_967000_button_sync.js
++++ b/browser/components/customizableui/test/browser_967000_button_sync.js
+@@ -66,17 +66,17 @@ function* openPrefsFromMenuPanel(expecte
+   let syncButton = document.getElementById("sync-button");
+   ok(syncButton, "The Sync button was added to the Panel Menu");
+ 
+   syncButton.click();
+   let syncPanel = document.getElementById("PanelUI-remotetabs");
+   ok(syncPanel.getAttribute("current"), "Sync Panel is in view");
+ 
+   // Sync is not configured - verify that state is reflected.
+-  let subpanel = document.getElementById(expectedPanelId)
++  let subpanel = document.getElementById(expectedPanelId);
+   ok(!subpanel.hidden, "sync setup element is visible");
+ 
+   // Find and click the "setup" button.
+   let setupButton = subpanel.querySelector(".PanelUI-remotetabs-prefs-button");
+   setupButton.click();
+ 
+   let deferred = Promise.defer();
+   let handler = (e) => {
+@@ -113,16 +113,17 @@ function* asyncCleanup() {
+   // restore the tabs
+   gBrowser.addTab(initialLocation);
+   gBrowser.removeTab(newTab);
+   UITour.tourBrowsersByWindow.delete(window);
+ }
+ 
+ // When Sync is not setup.
+ add_task(() => openPrefsFromMenuPanel("PanelUI-remotetabs-setupsync", "synced-tabs"));
++document.getElementById("PanelUI-remotetabs-setupsync").hidden = false;
+ add_task(asyncCleanup);
+ 
+ // When Sync is configured in a "needs reauthentication" state.
+ add_task(function* () {
+   // configure our broadcasters so we are in the right state.
+   document.getElementById("sync-reauth-state").hidden = false;
+   document.getElementById("sync-setup-state").hidden = true;
+   document.getElementById("sync-syncnow-state").hidden = true;
