@@ -1,0 +1,35 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1479147314 -19800
+#      Mon Nov 14 23:45:14 2016 +0530
+# Branch test_1
+# Node ID ba27a207b4cf108a99508affb8fa04a502f0b2a7
+# Parent  1f5cfd48e060117cc66494dd77680f7439588c53
+Bug 1317174 - Fix browser_bug719271.js to run multiple times in a single session r=jmaher
+
+diff --git a/browser/base/content/test/general/browser_bug719271.js b/browser/base/content/test/general/browser_bug719271.js
+--- a/browser/base/content/test/general/browser_bug719271.js
++++ b/browser/base/content/test/general/browser_bug719271.js
+@@ -19,16 +19,22 @@ function test() {
+     yield FullZoomHelper.load(gTab1, TEST_PAGE);
+     yield FullZoomHelper.load(gTab2, TEST_VIDEO);
+   }).then(zoomTab1, FullZoomHelper.failAndContinue(finish));
+ }
+ 
+ function zoomTab1() {
+   Task.spawn(function* () {
+     is(gBrowser.selectedTab, gTab1, "Tab 1 is selected");
++
++    //Reset zoom level if we run this test > 1 time in same browser session.
++    var level1 = ZoomManager.getZoomForBrowser(gBrowser.getBrowserForTab(gTab1));
++    if(level1 > 1)
++      FullZoom.reduce();
++
+     FullZoomHelper.zoomTest(gTab1, 1, "Initial zoom of tab 1 should be 1");
+     FullZoomHelper.zoomTest(gTab2, 1, "Initial zoom of tab 2 should be 1");
+ 
+     FullZoom.enlarge();
+     gLevel1 = ZoomManager.getZoomForBrowser(gBrowser.getBrowserForTab(gTab1));
+ 
+     ok(gLevel1 > 1, "New zoom for tab 1 should be greater than 1");
+     FullZoomHelper.zoomTest(gTab2, 1, "Zooming tab 1 should not affect tab 2");
