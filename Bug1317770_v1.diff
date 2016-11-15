@@ -1,0 +1,29 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1479238767 -19800
+#      Wed Nov 16 01:09:27 2016 +0530
+# Branch test_1
+# Node ID 6758cadd761bc54a1ce04d3a7230cfbadb4f11a5
+# Parent  020e2f283e93cfb3117a367ddef757e5576ca415
+Bug 1317770 - Reset sjs file to enable multiple run in same session r?jmaher
+
+diff --git a/parser/htmlparser/tests/mochitest/file_bug655682.sjs b/parser/htmlparser/tests/mochitest/file_bug655682.sjs
+--- a/parser/htmlparser/tests/mochitest/file_bug655682.sjs
++++ b/parser/htmlparser/tests/mochitest/file_bug655682.sjs
+@@ -1,13 +1,16 @@
+ var timer;
+ var callback;
+ 
+ function handleRequest(request, response)
+ {
++  // Reset the state when running more than once in the same browser session.
++  setState("triggered", "");
++
+   if (request.queryString.indexOf("trigger") != -1) {
+     setState("triggered", "triggered");
+     response.setHeader("Cache-Control", "no-cache", false);
+     response.setHeader("Content-Type", "text/javascript; charset=utf-8", false);
+     response.write(";");
+   } else {
+     response.processAsync();
+     response.setHeader("Cache-Control", "no-cache", false);
