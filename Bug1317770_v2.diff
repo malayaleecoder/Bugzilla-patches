@@ -1,0 +1,32 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1479241471 -19800
+#      Wed Nov 16 01:54:31 2016 +0530
+# Branch test_1
+# Node ID 0b0d911325542a144a7850294da15cbb194f9956
+# Parent  020e2f283e93cfb3117a367ddef757e5576ca415
+Bug 1317770 - Reset sjs file to enable multiple run in same session r=jmaher
+
+diff --git a/parser/htmlparser/tests/mochitest/file_bug655682.sjs b/parser/htmlparser/tests/mochitest/file_bug655682.sjs
+--- a/parser/htmlparser/tests/mochitest/file_bug655682.sjs
++++ b/parser/htmlparser/tests/mochitest/file_bug655682.sjs
+@@ -4,16 +4,19 @@ var callback;
+ function handleRequest(request, response)
+ {
+   if (request.queryString.indexOf("trigger") != -1) {
+     setState("triggered", "triggered");
+     response.setHeader("Cache-Control", "no-cache", false);
+     response.setHeader("Content-Type", "text/javascript; charset=utf-8", false);
+     response.write(";");
+   } else {
++    // Reset the state when running more than once in same browser session.
++    setState("triggered", "");
++
+     response.processAsync();
+     response.setHeader("Cache-Control", "no-cache", false);
+     response.setHeader("Content-Type", "text/html; charset=utf-8", false);
+     response.write("<table><tr><td>A</td>     ");
+     response.bodyOutputStream.flush();
+     timer = Components.classes["@mozilla.org/timer;1"]
+       .createInstance(Components.interfaces.nsITimer);
+ 
