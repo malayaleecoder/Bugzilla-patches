@@ -1,0 +1,47 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1479753595 -19800
+#      Tue Nov 22 00:09:55 2016 +0530
+# Branch test_2
+# Node ID 1ccf44c487c8c76eb04a9812f6e68f2895d159f8
+# Parent  cf42ef83274e316b43033983956233768bc6b522
+Bug 1317164 - Fix browser_967000_button_sync to run multiple times in a single session
+
+diff --git a/browser/components/customizableui/test/browser_967000_button_sync.js b/browser/components/customizableui/test/browser_967000_button_sync.js
+--- a/browser/components/customizableui/test/browser_967000_button_sync.js
++++ b/browser/components/customizableui/test/browser_967000_button_sync.js
+@@ -53,30 +53,33 @@ function* openPrefsFromMenuPanel(expecte
+   Services.prefs.setCharPref("identity.fxaccounts.remote.signup.uri", "http://example.com/");
+ 
+   // add the Sync button to the panel
+   CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+ 
+   // check the button's functionality
+   yield PanelUI.show();
+ 
++  if (expectedPanelId == "PanelUI-remotetabs-setupsync")
++    document.getElementById(expectedPanelId).hidden = false;
++
+   if (entryPoint == "uitour") {
+     UITour.tourBrowsersByWindow.set(window, new Set());
+     UITour.tourBrowsersByWindow.get(window).add(gBrowser.selectedBrowser);
+   }
+ 
+   let syncButton = document.getElementById("sync-button");
+   ok(syncButton, "The Sync button was added to the Panel Menu");
+ 
+   syncButton.click();
+   let syncPanel = document.getElementById("PanelUI-remotetabs");
+   ok(syncPanel.getAttribute("current"), "Sync Panel is in view");
+ 
+   // Sync is not configured - verify that state is reflected.
+-  let subpanel = document.getElementById(expectedPanelId)
++  let subpanel = document.getElementById(expectedPanelId);
+   ok(!subpanel.hidden, "sync setup element is visible");
+ 
+   // Find and click the "setup" button.
+   let setupButton = subpanel.querySelector(".PanelUI-remotetabs-prefs-button");
+   setupButton.click();
+ 
+   let deferred = Promise.defer();
+   let handler = (e) => {
