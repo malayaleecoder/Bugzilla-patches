@@ -1,0 +1,26 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1481917106 -19800
+#      Sat Dec 17 01:08:26 2016 +0530
+# Branch test_3
+# Node ID 8d5b83e74efdb834fa4309577175c9c0bfbbd904
+# Parent  c4916825018fb934a38e6a14ab8dfabc104f0f07
+Bug 1324067 - Clear the findBar value before test end
+
+diff --git a/toolkit/content/tests/browser/browser_bug1198465.js b/toolkit/content/tests/browser/browser_bug1198465.js
+--- a/toolkit/content/tests/browser/browser_bug1198465.js
++++ b/toolkit/content/tests/browser/browser_bug1198465.js
+@@ -63,10 +63,13 @@ add_task(function* () {
+   // doesn't really matter.
+   findBar.onCurrentSelection("foo", true);
+   ok(!findBar._startFindDeferred, "prefilled value fetched");
+   is(findBar._findField.value, "ab", "ab kept instead of prefill value");
+ 
+   EventUtils.sendChar("c", window);
+   is(findBar._findField.value, "abc", "c is appended after ab");
+ 
++  // Clear the findField value to make the test  run successfully
++  // for multiple runs in the same browser session.
++  findBar._findField.value = "";
+   yield BrowserTestUtils.removeTab(aTab);
+ });
