@@ -1,0 +1,53 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1481226478 -19800
+#      Fri Dec 09 01:17:58 2016 +0530
+# Branch test_3
+# Node ID c4916825018fb934a38e6a14ab8dfabc104f0f07
+# Parent  bf737f7530f40dec9056bd7cdb4a1d3c6a5ca9ec
+Bug 1322497 - Adjust initialOffsetTop value.
+
+diff --git a/layout/generic/test/test_intrinsic_size_on_loading.html b/layout/generic/test/test_intrinsic_size_on_loading.html
+--- a/layout/generic/test/test_intrinsic_size_on_loading.html
++++ b/layout/generic/test/test_intrinsic_size_on_loading.html
+@@ -22,16 +22,23 @@ https://bugzilla.mozilla.org/show_bug.cg
+       is(finalOffsetTop, 8, "final offsetTop: " + finalOffsetTop);
+       ok(initialOffsetTop < finalOffsetTop, "offsetTop should get larger.");
+       SimpleTest.finish();
+     }
+ 
+     function fail() {
+       ok(false, "image loading should not fail.");
+     }
++
++    function cleanup() {
++      // Adjust the value of initialOffsetTop when running
++      // the test multiple times in same browser session
++      if (initialOffsetTop == document.images.length)
++        initialOffsetTop = 0;
++    }
+   </script>
+ </head>
+ <body onload="report();">
+   <!-- Bunch of tiny images: -->
+   <img src="file_SlowImage.sjs" onerror="fail();">
+   <img src="file_SlowImage.sjs" onerror="fail();">
+   <img src="file_SlowImage.sjs" onerror="fail();">
+   <img src="file_SlowImage.sjs" onerror="fail();">
+@@ -39,15 +46,16 @@ https://bugzilla.mozilla.org/show_bug.cg
+   <img src="file_SlowImage.sjs" onerror="fail();">
+   <img src="file_SlowImage.sjs" onerror="fail();">
+   <img src="file_SlowImage.sjs" onerror="fail();">
+ 
+   <div id="marker">Marker div</div>
+   <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1205027">Mozilla Bug 1205027</a>
+   <script>
+     initialOffsetTop = marker.offsetTop;
++    cleanup();
+     // prompt the sjs "server" to proceed to serve data to our <img> elements
+     var img = new Image();
+     img.onerror = fail;
+     img.src = "file_SlowImage.sjs?continue";
+   </script>
+ </body>
+ </html>
