@@ -1,0 +1,55 @@
+# HG changeset patch
+# User malayaleecoder <malayaleecoder@gmail.com>
+# Date 1482337433 -19800
+#      Wed Dec 21 21:53:53 2016 +0530
+# Branch rolling
+# Node ID e2960334834af346f3dff0ad803da954e66209a1
+# Parent  facf975a52c96b5375f3759eb27c68a4093f8f26
+Bug 1325099 - reset imported.Debugging.fake value
+
+diff --git a/toolkit/modules/tests/browser/browser_Battery.js b/toolkit/modules/tests/browser/browser_Battery.js
+--- a/toolkit/modules/tests/browser/browser_Battery.js
++++ b/toolkit/modules/tests/browser/browser_Battery.js
+@@ -1,25 +1,24 @@
+ /* This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+-
+ var imported = Components.utils.import("resource://gre/modules/Battery.jsm", this);
+ Cu.import("resource://gre/modules/Services.jsm", this);
+ 
+ function test() {
+   waitForExplicitFinish();
+ 
+   is(imported.Debugging.fake, false, "Battery spoofing is initially false")
+ 
+   GetBattery().then(function (battery) {
+     for (let k of ["charging", "chargingTime", "dischargingTime", "level"]) {
+       let backup = battery[k];
+       battery[k] = "__magic__";
+-      is(battery[k], backup, "Setting battery " + k + "preference without spoofing enabled should fail");
++      is(battery[k], backup, "Setting battery " + k + " preference without spoofing enabled should fail");
+     }
+ 
+     imported.Debugging.fake = true;
+ 
+     // reload again to get the fake one
+     GetBattery().then(function (battery) {
+       battery.charging = true;
+       battery.chargingTime = 100;
+@@ -30,12 +29,15 @@ function test() {
+ 
+       battery.charging = false;
+       battery.dischargingTime = 50;
+       battery.level = 0.7;
+       ok(!battery.charging, "Test for charging setter");
+       is(battery.dischargingTime, 50, "Test for dischargingTime setter");
+       is(battery.level, 0.7, "Test for level setter");
+ 
++      // Resetting the value to make the test run successful
++      // for multiple runs in same browser session.
++      imported.Debugging.fake = false;
+       finish();
+     });
+   });
+ }
